@@ -61,10 +61,10 @@ const runs = [
   { id: 'RUN-2416', name: '프레스 패널 형상 예측', plant: '울산 · 프레스', model: 'FormNet 1.2', progress: 91, eta: '06 MIN' },
 ];
 
-const events = [
-  { time: '08:42', code: 'MODEL', title: 'WeldNet 2.4 운영 승격', detail: '울산공장 · 차체 품질', tone: 'live' },
-  { time: '08:31', code: 'DRIFT', title: 'AssemblyNet 기준 이탈', detail: '전주공장 · 검토 요청', tone: 'warn' },
-  { time: '08:06', code: 'DATA', title: 'Paint-Q3 데이터 검증 완료', detail: '아산공장 · 18.2K samples', tone: 'ready' },
+const changes = [
+  { time: '08:42', kind: 'MODEL', title: 'WeldNet 2.4 운영 승격', context: '울산 · 차체 3라인', evidence: '18K 판정 · 오류 0.21%', impact: '영향 없음', tone: 'live' },
+  { time: '08:31', kind: 'DRIFT', title: 'AssemblyNet 기준 이탈', context: '전주 · 의장 조립', evidence: '기준 대비 −2.3%', impact: '검토 필요', tone: 'warn' },
+  { time: '08:06', kind: 'DATA', title: 'Paint-Q3 데이터 검증 완료', context: '아산 · 도장 2라인', evidence: '18.2K samples · 7/7', impact: '학습 가능', tone: 'ready' },
 ];
 
 export default function Home() {
@@ -73,7 +73,7 @@ export default function Home() {
       <Sidebar className="app-sidebar">
         <SidebarHeader className="sidebar-header">
           <a href="#top" className="wordmark" aria-label="PRIZM 홈">
-            <Image src="/prizm-wordmark.svg" alt="PRIZM" width={740} height={130} priority />
+            <Image src="/prizm-logo-dark.svg" alt="PRIZM" width={920} height={300} priority />
           </a>
         </SidebarHeader>
 
@@ -136,7 +136,7 @@ export default function Home() {
             <Search size={16} /><span>프로젝트, 자산, 모델 검색</span><kbd>⌘ K</kbd>
           </button>
           <div className="topbar-actions">
-            <span className="system-health"><i /> ALL SYSTEMS NORMAL</span>
+            <span className="system-health"><i /> 시스템 정상</span>
             <button type="button" className="icon-button" aria-label="알림"><Bell size={18} /><i /></button>
             <span className="topbar-divider" />
             <button className="profile" type="button">
@@ -148,7 +148,7 @@ export default function Home() {
         <main className="dashboard">
           <section className="operations-heading">
             <div>
-              <span className="page-index">OPERATIONS / 09 SEP 2026 / DAY SHIFT</span>
+              <span className="page-index">9월 9일 수요일 · 주간조 · 08:42 KST</span>
               <h1>제조 AI 운용 현황</h1>
               <p>12개 생산 거점의 흐름과 오늘 판단할 항목을 한 화면에 모았습니다.</p>
             </div>
@@ -172,52 +172,34 @@ export default function Home() {
 
             <div className="ledger-body">
               <div className="network-readout">
-                <div className="readout-summary">
-                  <div className="health-score">
-                    <span>NETWORK HEALTH</span>
-                    <strong>99.8<small>%</small></strong>
-                    <em>+0.2 / 24H</em>
-                  </div>
-                  <div className="status-copy">
-                    <span>12 / 12 SITES ONLINE</span>
-                    <h2>64개 모델이 생산 현장에서<br />운영되고 있습니다.</h2>
-                    <p>63개는 기준 범위, 1개는 성능 변화를 관찰 중입니다.</p>
-                  </div>
-                  <div className="status-key">
-                    <div><i className="key-normal" /><span>정상</span><strong>63</strong></div>
-                    <div><i className="key-watch" /><span>관찰</span><strong>01</strong></div>
-                    <div><i className="key-stop" /><span>중단</span><strong>00</strong></div>
-                  </div>
+                <div className="network-status-strip">
+                  <div><span>생산 거점</span><strong>12 / 12</strong><small>연결</small></div>
+                  <div><span>운영 모델</span><strong>64</strong><small>63 정상 · 1 관찰</small></div>
+                  <div><span>추론 처리</span><strong>2.48M</strong><small>최근 24시간</small></div>
+                  <div><span>서비스 가용성</span><strong>99.8%</strong><small>SLO 99.5%</small></div>
                 </div>
 
-                <figure className="throughput-chart">
-                  <figcaption>
-                    <span>INFERENCE LOAD / 24H</span>
-                    <strong>2.48M <small>+12.6%</small></strong>
-                  </figcaption>
-                  <svg viewBox="0 0 900 180" preserveAspectRatio="none" aria-labelledby="chart-title chart-desc">
-                    <title id="chart-title">최근 24시간 추론 처리량</title>
-                    <desc id="chart-desc">새벽부터 오전까지 추론량이 증가하며 8시 42분 현재 2.48백만 건입니다.</desc>
-                    <g className="chart-grid-lines">
-                      <path d="M0 22H900 M0 72H900 M0 122H900 M0 172H900" />
-                      <path d="M75 0V180 M225 0V180 M375 0V180 M525 0V180 M675 0V180 M825 0V180" />
-                    </g>
-                    <path className="chart-area" d="M0 147 C55 142 72 151 118 136 S192 120 238 129 S315 105 360 111 S434 79 480 92 S556 61 598 72 S676 43 722 56 S800 31 900 20 L900 180 L0 180 Z" />
-                    <path className="chart-line" d="M0 147 C55 142 72 151 118 136 S192 120 238 129 S315 105 360 111 S434 79 480 92 S556 61 598 72 S676 43 722 56 S800 31 900 20" />
-                    <line className="chart-now-line" x1="900" y1="0" x2="900" y2="180" />
-                    <circle className="chart-now-dot" cx="900" cy="20" r="5" />
-                  </svg>
-                  <div className="chart-axis"><span>09:00</span><span>13:00</span><span>17:00</span><span>21:00</span><span>01:00</span><span>05:00</span><strong>NOW</strong></div>
-                </figure>
+                <div className="change-ledger">
+                  <header><div><span>지난 접속 이후</span><strong>3건의 변경</strong></div><time>06:30 → 08:42</time></header>
+                  {changes.map((change) => (
+                    <a href="#projects" className="change-row" key={`${change.time}-${change.title}`}>
+                      <time>{change.time}</time>
+                      <span className={`change-kind ${change.tone}`}>{change.kind}</span>
+                      <span className="change-title"><strong>{change.title}</strong><small>{change.context}</small></span>
+                      <span className="change-evidence"><small>근거</small><strong>{change.evidence}</strong></span>
+                      <span className={`change-impact ${change.tone}`}>{change.impact}</span>
+                      <ArrowRight size={14} />
+                    </a>
+                  ))}
+                </div>
 
                 <div className="flowline" id="lifecycle">
                   {flowStages.map((stage, index) => (
                     <a href="#projects" className="flow-stage" key={stage.code}>
-                      <div className="flow-index">{stage.index}</div>
                       <div className="flow-name"><strong>{stage.code}</strong><span>{stage.label}</span></div>
                       <div className="flow-value"><strong>{stage.value}</strong><span>{stage.unit}</span></div>
                       <small>{stage.meta}</small>
-                      {index < flowStages.length - 1 && <ArrowRight className="flow-arrow" size={14} />}
+                      {index === 0 && <i className="flow-current" />}
                     </a>
                   ))}
                 </div>
@@ -225,22 +207,20 @@ export default function Home() {
 
               <aside className="decision-rail" id="attention">
                 <header>
-                  <div><span>DECISIONS</span><strong>02</strong></div>
-                  <small>사람의 판단을 기다리는 항목</small>
+                  <div><span>판단 대기</span><strong>2건</strong></div>
+                  <small>담당자 확인이 필요한 업무</small>
                 </header>
                 <a href="#projects" className="decision-item decision-warning">
-                  <div className="decision-code"><span>01</span><strong>DRIFT / P1</strong></div>
+                  <div className="decision-code"><strong>성능 변화 · 우선</strong><time>11:30까지</time></div>
                   <h3>AssemblyNet 기준 이탈</h3>
-                  <p>운영 정확도가 기준보다 2.3% 낮습니다. 최근 데이터 분포를 확인하세요.</p>
-                  <dl><div><dt>대상</dt><dd>전주 · 의장</dd></div><div><dt>담당</dt><dd>품질AI팀</dd></div><div><dt>기한</dt><dd>11:30</dd></div></dl>
-                  <span className="decision-link">원인과 권장 조치 보기 <ArrowUpRight size={14} /></span>
+                  <p>기준 대비 −2.3% · 전주 의장 · 품질AI팀</p>
+                  <span className="decision-link">원인 및 조치 검토 <ArrowRight size={14} /></span>
                 </a>
                 <a href="#projects" className="decision-item">
-                  <div className="decision-code"><span>02</span><strong>RELEASE / P2</strong></div>
+                  <div className="decision-code"><strong>배포 승인</strong><time>16:00까지</time></div>
                   <h3>SurfaceNet 배포 승인</h3>
-                  <p>후보 모델 평가가 완료되었습니다. 운영 승격 여부를 결정하세요.</p>
-                  <dl><div><dt>대상</dt><dd>아산 · 도장</dd></div><div><dt>담당</dt><dd>MLOps</dd></div><div><dt>기한</dt><dd>16:00</dd></div></dl>
-                  <span className="decision-link">평가 결과 검토 <ArrowUpRight size={14} /></span>
+                  <p>검증 7/7 통과 · 아산 도장 · MLOps</p>
+                  <span className="decision-link">비교 결과 검토 <ArrowRight size={14} /></span>
                 </a>
                 <a href="#projects" className="decision-footer">전체 승인함 열기 <ArrowRight size={14} /></a>
               </aside>
@@ -249,7 +229,7 @@ export default function Home() {
 
           <section className="plant-section" id="assets">
             <div className="section-titlebar">
-              <div><span>01 / PLANT × LIFECYCLE</span><h2>거점별 운영 매트릭스</h2></div>
+              <div><span>거점 운영</span><h2>거점별 운영 매트릭스</h2></div>
               <div className="section-tools"><span>4 OF 12 SITES</span><button type="button"><SlidersHorizontal size={14} /> 필터</button><a href="#assets">전체 거점 <ArrowRight size={14} /></a></div>
             </div>
             <div className="plant-matrix-wrap">
@@ -271,10 +251,9 @@ export default function Home() {
             </div>
           </section>
 
-          <div className="lower-grid" id="projects">
-            <section className="run-board">
+          <section className="run-board pipeline-section" id="projects">
               <div className="section-titlebar compact-titlebar">
-                <div><span>02 / ACTIVE RUNS</span><h2>실행 중인 파이프라인</h2></div>
+                <div><span>파이프라인 실행</span><h2>실행 중인 파이프라인</h2></div>
                 <a href="#lifecycle">전체 파이프라인 <ArrowRight size={14} /></a>
               </div>
               <div className="run-list">
@@ -288,26 +267,9 @@ export default function Home() {
                   </a>
                 ))}
               </div>
-            </section>
+          </section>
 
-            <aside className="event-board">
-              <div className="section-titlebar compact-titlebar">
-                <div><span>03 / EVENT LOG</span><h2>최근 변경</h2></div>
-                <a href="#attention">전체 기록 <ArrowRight size={14} /></a>
-              </div>
-              <div className="event-list">
-                {events.map((event) => (
-                  <a href="#attention" className="event-row" key={`${event.time}-${event.title}`}>
-                    <time>{event.time}</time><i className={event.tone} />
-                    <span><small>{event.code}</small><strong>{event.title}</strong><em>{event.detail}</em></span>
-                    <ArrowUpRight size={14} />
-                  </a>
-                ))}
-              </div>
-            </aside>
-          </div>
-
-          <footer className="dashboard-footer"><span>PRIZM / PRODUCTION-READY INTELLIGENCE FOR ZERO-LOSS MANUFACTURING</span><span>HYUNDAI MOTOR COMPANY · 제조솔루션본부</span></footer>
+          <footer className="dashboard-footer"><span>PRIZM v2.8.4 · PRODUCTION</span><span>HYUNDAI MOTOR COMPANY · 제조솔루션본부</span></footer>
         </main>
       </div>
     </SidebarProvider>
