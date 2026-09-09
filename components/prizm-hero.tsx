@@ -5,12 +5,12 @@ import Image from 'next/image';
 import { useState, type CSSProperties, type PointerEvent } from 'react';
 
 const factories = [
-  { id: 'na', code: 'NA', x: 892, y: 125 },
-  { id: 'eu', code: 'EU', x: 995, y: 103 },
-  { id: 'kr', code: 'KR', x: 1084, y: 142 },
-  { id: 'in', code: 'IN', x: 1047, y: 215 },
-  { id: 'latam', code: 'LATAM', x: 946, y: 258 },
-  { id: 'sea', code: 'SEA', x: 1112, y: 260 },
+  { id: 'na', code: 'NA', detail: 'HMGMA · EV', x: 892, y: 125 },
+  { id: 'eu', code: 'EU', detail: 'CZECH · ASSY', x: 995, y: 103 },
+  { id: 'kr', code: 'KR', detail: 'ULSAN · MOBILITY', x: 1084, y: 142 },
+  { id: 'in', code: 'IN', detail: 'CHENNAI · ASSY', x: 1047, y: 215 },
+  { id: 'latam', code: 'LATAM', detail: 'BRAZIL · ASSY', x: 946, y: 258 },
+  { id: 'sea', code: 'SEA', detail: 'INDONESIA · EV', x: 1112, y: 260 },
 ];
 
 const modelStreams = [
@@ -101,7 +101,14 @@ export function PrizmHero() {
           </g>
 
           <g className="prizm-object">
-            <circle className="prism-aura" cx="501" cy="175" r="66" /><polygon className="prism-back" points="468,76 574,175 468,274" /><polygon className="prism-face" points="442,76 548,175 442,274" /><path className="prism-edge" d="M442 76 L468 76 L574 175 L468 274 L442 274" /><circle className="prism-core" cx="508" cy="175" r="40" />
+            <circle className="prism-aura" cx="501" cy="175" r="78" />
+            <polygon className="prism-back" points="468,76 574,175 468,274" />
+            <polygon className="prism-face" points="442,76 548,175 442,274" />
+            <polygon className="prism-sheen" points="442,76 478,110 455,248 442,274" />
+            <path className="prism-edge" d="M442 76 L468 76 L574 175 L468 274 L442 274" />
+            <path className="prism-light-axis" d="M426 175 H572" />
+            <circle className="prism-core" cx="512" cy="175" r="44" />
+            <circle className="prism-flare" cx="552" cy="175" r="7" />
           </g>
 
           <g className="world-map">
@@ -130,9 +137,15 @@ export function PrizmHero() {
           <g className="factory-field">
             {factories.map((factory) => {
               const isLinked = active.factories.includes(factory.id);
+              const alignRight = factory.x > 1060;
               return (
-                <g key={factory.id} className={isLinked ? 'factory-site is-linked' : 'factory-site'} transform={`translate(${factory.x} ${factory.y})`}>
-                  <circle className="factory-halo" r="16" style={{ '--ray-color': active.color } as CSSProperties} /><path className="factory-shape" d="M-10 8V-4l7 4v-7l7 4v-10h5V8z" /><path className="factory-base" d="M-13 8H13" /><text x="17" y="4">{factory.code}</text>
+                <g key={factory.id} className={isLinked ? 'factory-site is-linked' : 'factory-site'} transform={`translate(${factory.x} ${factory.y})`} style={{ '--ray-color': active.color } as CSSProperties}>
+                  <circle className="factory-halo" r="16" />
+                  <path className="factory-shape" d="M-10 8V-4l7 4v-7l7 4v-10h5V8z" />
+                  <path className="factory-base" d="M-13 8H13" />
+                  <rect className="factory-tag" x={alignRight ? -96 : 14} y="-12" width="80" height="28" rx="2" />
+                  <text className="factory-code" x={alignRight ? -19 : 19} y="-1" textAnchor={alignRight ? 'end' : 'start'}>{factory.code}</text>
+                  <text className="factory-role" x={alignRight ? -19 : 19} y="10" textAnchor={alignRight ? 'end' : 'start'}>{factory.detail}</text>
                 </g>
               );
             })}

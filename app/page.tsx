@@ -5,7 +5,6 @@ import {
   Bell,
   Boxes,
   ChevronDown,
-  ChevronRight,
   CircleHelp,
   Command,
   Factory,
@@ -131,7 +130,7 @@ export default function Home() {
       <div className="app-shell" id="top">
         <header className="topbar">
           <div className="topbar-path">
-            <SidebarTrigger aria-label="메뉴 열기 또는 닫기" /><span>PRIZM</span><ChevronRight size={13} /><strong>Overview</strong>
+            <SidebarTrigger aria-label="메뉴 열기 또는 닫기" /><strong>Overview</strong>
           </div>
           <button className="command-search" type="button">
             <Search size={16} /><span>프로젝트, 자산, 모델 검색</span><kbd>⌘ K</kbd>
