@@ -20,6 +20,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import Image from 'next/image';
+import { PrizmHero } from '@/components/prizm-hero';
 import {
   Sidebar,
   SidebarContent,
@@ -33,7 +34,7 @@ import {
 } from '@/components/ui/sidebar';
 
 const navItems = [
-  { label: 'Operations', href: '#top', icon: LayoutDashboard, active: true },
+  { label: 'Overview', href: '#top', icon: LayoutDashboard, active: true },
   { label: 'AI Catalog', href: '#assets', icon: LibraryBig },
   { label: 'Pipelines', href: '#lifecycle', icon: Workflow },
   { label: 'Deployments', href: '#projects', icon: Boxes },
@@ -130,7 +131,7 @@ export default function Home() {
       <div className="app-shell" id="top">
         <header className="topbar">
           <div className="topbar-path">
-            <SidebarTrigger aria-label="메뉴 열기 또는 닫기" /><span>PRIZM</span><ChevronRight size={13} /><strong>Operations</strong>
+            <SidebarTrigger aria-label="메뉴 열기 또는 닫기" /><span>PRIZM</span><ChevronRight size={13} /><strong>Overview</strong>
           </div>
           <button className="command-search" type="button">
             <Search size={16} /><span>프로젝트, 자산, 모델 검색</span><kbd>⌘ K</kbd>
@@ -145,7 +146,9 @@ export default function Home() {
           </div>
         </header>
 
-        <main className="dashboard">
+        <PrizmHero />
+
+        <main className="dashboard" id="operations">
           <section className="operations-heading">
             <div>
               <span className="page-index">9월 9일 수요일 · 주간조 · 08:42 KST</span>
