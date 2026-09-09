@@ -67,8 +67,8 @@ export function PrizmHero() {
         <div className="hero-brand-lockup">
           <Image className="hero-wordmark" src="/prizm-eforest.svg" alt="E-FOREST PRIZM" width={920} height={300} priority />
           <div className="hero-definition">
-            <h1 id="prizm-hero-title">Production-Ready Innovation</h1>
-            <p>for Zero-Loss Manufacturing</p>
+            <p>Production-Ready Innovation</p>
+            <h1 id="prizm-hero-title"><small>for</small> <span>Zero-Loss</span> Manufacturing</h1>
           </div>
         </div>
         <span className="hero-network-state"><i /> GLOBAL NETWORK · 12 SITES CONNECTED</span>
