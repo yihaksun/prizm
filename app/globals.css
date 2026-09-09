@@ -266,7 +266,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--active-blue); o
 .hero-brand-lockup { min-width: 0; display: flex; align-items: center; gap: 1.45rem; }
 .hero-wordmark { width: 7.75rem; height: auto; flex: none; }
 .hero-definition { min-width: 0; padding-left: 1.25rem; border-left: 1px solid rgba(0,44,95,0.18); }
-.hero-definition h1 { margin: 0; color: var(--hyundai-blue); font-size: 0.96rem; font-weight: 720; line-height: 1.25; letter-spacing: -0.032em; white-space: nowrap; }
+.hero-definition h1 { margin: 0; display: grid; gap: 0.28rem; color: #294a6a; font-size: 0.92rem; font-weight: 520; line-height: 1.08; letter-spacing: -0.026em; white-space: nowrap; }
+.hero-definition h1 > span { display: block; }
 .hero-definition h1 em { color: transparent; background: linear-gradient(145deg, #7c4dff 4%, #00bfe8 32%, #20c997 50%, #ffcc32 70%, #f23d78 96%); background-clip: text; -webkit-background-clip: text; font-style: normal; font-weight: inherit; }
 .prism-canvas { min-height: 0; overflow: hidden; }
 .prism-canvas svg { width: 100%; height: 100%; max-height: none; }
@@ -486,7 +487,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--active-blue); o
   .run-eta { display: none; }
   .prizm-hero { height: auto; min-height: 34rem; grid-template-rows: 5.05rem minmax(18rem, 1fr) 6.6rem; }
   .hero-wordmark { width: 7rem; }
-  .hero-definition h1 { font-size: 0.82rem; }
+  .hero-definition h1 { font-size: 0.78rem; }
   .prism-canvas { min-height: 18rem; }
   .prism-canvas svg { width: 116%; max-width: none; margin-left: -8%; }
   .hero-work-ledger { overflow-x: auto; grid-template-columns: 8rem repeat(4, minmax(11rem, 1fr)) 8rem; }
@@ -520,7 +521,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--active-blue); o
   .hero-brand-lockup { gap: 0.72rem; }
   .hero-wordmark { width: 6.65rem; }
   .hero-definition { padding-left: 0.72rem; }
-  .hero-definition h1 { max-width: 13rem; font-size: 0.68rem; white-space: normal; }
+  .hero-definition h1 { max-width: 13rem; gap: 0.2rem; font-size: 0.64rem; white-space: normal; }
   .hero-network-state { display: none; }
   .prism-canvas { min-height: 20rem; margin: 0 -1rem; }
   .prism-canvas svg { width: 170%; height: 100%; margin-left: -47%; }
