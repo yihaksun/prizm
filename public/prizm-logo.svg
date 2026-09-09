@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="119.5 85 681 130" role="img" aria-labelledby="title desc">
+  <title id="title">PRIZM white presentation logo with spectrum Z</title>
+  <desc id="desc">A presentation-ready PRIZM wordmark on white, with navy letters and a spectral rainbow Z.</desc>
+  <defs>
+    <linearGradient id="spectrum" gradientUnits="userSpaceOnUse" x1="0" y1="130" x2="140" y2="0">
+      <stop offset="0" stop-color="#7c4dff"/>
+      <stop offset=".17" stop-color="#356dff"/>
+      <stop offset=".34" stop-color="#00bfe8"/>
+      <stop offset=".51" stop-color="#20c997"/>
+      <stop offset=".67" stop-color="#ffcc32"/>
+      <stop offset=".83" stop-color="#ff8129"/>
+      <stop offset="1" stop-color="#f23d78"/>
+    </linearGradient>
+  </defs>
+  <rect width="920" height="300" fill="#ffffff"/>
+  <g transform="translate(119.5 85)" fill="#06162f">
+    <!-- P -->
+    <path fill-rule="evenodd" d="M0 0h88l24 22v38L88 82H31v48H0V0Zm31 25v32h47l5-5V30l-5-5H31Z"/>
+    <!-- R -->
+    <g transform="translate(140)">
+      <path fill-rule="evenodd" d="M0 0h88l24 22v36L91 78l36 52H88L56 82H31v48H0V0Zm31 25v32h47l5-5V30l-5-5H31Z"/>
+    </g>
+    <!-- I -->
+    <path d="M292 0h31v130h-31z"/>
+    <!-- Z: the full prism spectrum -->
+    <g transform="translate(353)" fill="url(#spectrum)">
+      <path d="M0 0h140l-27 30H27L0 0Z"/>
+      <path d="M0 130h140l-27-30H27L0 130Z"/>
+      <path d="m105 28h31L35 102H4L105 28Z"/>
+      <path d="m112 28h7L19 102h-7l100-74Z" fill="#ffffff" opacity=".38"/>
+    </g>
+    <!-- M -->
+    <path d="M523 0h34l45 68 45-68h34v130h-31V51l-48 71-48-71v79h-31V0Z"/>
+  </g>
+</svg>
