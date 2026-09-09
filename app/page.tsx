@@ -71,7 +71,6 @@ export default function Home() {
           <a href="#top" className="wordmark" aria-label="PRIZM 홈">
             <img src="/prizm-wordmark.svg" alt="PRIZM" />
           </a>
-          <span className="product-label">Manufacturing AI Platform</span>
         </SidebarHeader>
 
         <SidebarContent>
