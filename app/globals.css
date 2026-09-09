@@ -262,7 +262,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--active-blue); o
 }
 .hero-brandbar { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 2rem; border-bottom: 1px solid rgba(0,44,95,0.14); }
 .hero-brand-lockup { min-width: 0; display: flex; align-items: center; gap: 1.25rem; }
-.hero-wordmark { width: 9.8rem; height: auto; flex: none; }
+.hero-wordmark { width: 11.8rem; height: auto; flex: none; }
 .hero-definition { min-width: 0; padding-left: 1.25rem; border-left: 1px solid rgba(0,44,95,0.18); }
 .hero-definition h1, .hero-definition p { margin: 0; }
 .hero-definition h1 { color: var(--hyundai-blue); font-size: 0.88rem; font-weight: 680; letter-spacing: -0.025em; }
@@ -484,7 +484,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--active-blue); o
   .run-row { grid-template-columns: 4.8rem minmax(11rem, 1fr) minmax(7rem, 0.7fr) auto; }
   .run-eta { display: none; }
   .prizm-hero { height: auto; min-height: 34rem; grid-template-rows: 4.5rem minmax(18rem, 1fr) 6.6rem; }
-  .hero-wordmark { width: 8.3rem; }
+  .hero-wordmark { width: 10.2rem; }
   .hero-definition h1 { font-size: 0.78rem; }
   .hero-definition p { font-size: 0.66rem; }
   .prism-canvas { min-height: 18rem; }
@@ -518,7 +518,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--active-blue); o
   .dashboard-footer { flex-direction: column; line-height: 1.55; }
   .prizm-hero { height: auto; min-height: calc(100svh - 3.75rem); grid-template-rows: 4.7rem minmax(20rem, 1fr) 6.5rem; padding: 0 1rem; }
   .hero-brand-lockup { gap: 0.72rem; }
-  .hero-wordmark { width: 7.35rem; }
+  .hero-wordmark { width: 9.15rem; }
   .hero-definition { padding-left: 0.72rem; }
   .hero-definition h1 { font-size: 0.66rem; line-height: 1.2; }
   .hero-definition p { margin-top: 0.12rem; font-size: 0.58rem; line-height: 1.2; }

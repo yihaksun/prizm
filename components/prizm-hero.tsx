@@ -65,7 +65,7 @@ export function PrizmHero() {
 
       <header className="hero-brandbar">
         <div className="hero-brand-lockup">
-          <Image className="hero-wordmark" src="/prizm-wordmark.svg" alt="PRIZM" width={740} height={130} priority />
+          <Image className="hero-wordmark" src="/prizm-eforest.svg" alt="E-FOREST PRIZM" width={920} height={300} priority />
           <div className="hero-definition">
             <h1 id="prizm-hero-title">Production-Ready Innovation</h1>
             <p>for Zero-Loss Manufacturing</p>
