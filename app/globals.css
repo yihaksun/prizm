@@ -248,6 +248,55 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--active-blue); o
 @keyframes factoryPing { 0%, 100% { transform: scale(0.65); opacity: 0.16; } 52% { transform: scale(1.35); opacity: 0.035; } }
 @keyframes orbitShift { to { stroke-dashoffset: -80; } }
 
+.prizm-hero {
+  width: 100%;
+  height: clamp(34rem, 76vh, 40rem);
+  min-height: 34rem;
+  grid-template-rows: 4.75rem minmax(0, 1fr) 6.8rem;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.hero-brandbar { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 2rem; border-bottom: 1px solid rgba(0,44,95,0.14); }
+.hero-brand-lockup { min-width: 0; display: flex; align-items: center; gap: 1.25rem; }
+.hero-wordmark { width: 9.8rem; height: auto; flex: none; }
+.hero-definition { min-width: 0; padding-left: 1.25rem; border-left: 1px solid rgba(0,44,95,0.18); }
+.hero-definition h1, .hero-definition p { margin: 0; }
+.hero-definition h1 { color: var(--hyundai-blue); font-size: 0.88rem; font-weight: 680; letter-spacing: -0.025em; }
+.hero-definition p { margin-top: 0.18rem; color: #63788a; font-size: 0.72rem; font-weight: 520; letter-spacing: -0.01em; }
+.prism-canvas { min-height: 0; overflow: hidden; }
+.prism-canvas svg { width: 100%; height: 100%; max-height: none; }
+.world-map path { fill: rgba(0,44,95,0.025); stroke: rgba(0,44,95,0.14); stroke-width: 1; stroke-linejoin: round; }
+.world-map .map-route { fill: none; stroke: rgba(0,170,210,0.24); stroke-dasharray: 3 7; animation: orbitShift 8s linear infinite; }
+.model-signature { color: var(--ray-color); }
+.model-signature path, .model-signature circle, .model-signature rect { fill: none; stroke: var(--ray-color); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.model-signature rect { fill: var(--ray-color); stroke: none; }
+.spectrum-ray .model-route { fill: none; stroke: var(--ray-color); stroke-width: 1; stroke-dasharray: 2 5; opacity: 0.5; }
+.factory-site { opacity: 0.25; transition: opacity 220ms ease; }
+.factory-site.is-linked { opacity: 1; }
+.factory-site .factory-halo { fill: var(--ray-color); opacity: 0; }
+.factory-site.is-linked .factory-halo { opacity: 0.12; }
+.factory-shape { fill: rgba(255,255,255,0.88); stroke: var(--hyundai-blue); stroke-width: 1.3; stroke-linejoin: bevel; }
+.factory-site.is-linked .factory-shape { stroke: var(--ray-color); stroke-width: 1.8; }
+.factory-base { fill: none; stroke: currentColor; stroke-width: 1; }
+.factory-site text { fill: #536a7c; font-family: var(--mono); font-size: 7px; font-weight: 750; letter-spacing: 0.08em; }
+.stream-control { right: 0.7%; bottom: 1.2%; }
+.hero-work-ledger { position: relative; z-index: 3; display: grid; grid-template-columns: minmax(8.5rem, 0.72fr) repeat(4, minmax(10.2rem, 1fr)) minmax(8rem, 0.68fr); margin: 0 calc(clamp(1.5rem, 2.8vw, 3.25rem) * -1); border-top: 1px solid rgba(0,44,95,0.19); background: rgba(255,255,255,0.74); backdrop-filter: blur(18px); }
+.work-ledger-label, .work-ledger-cell, .hero-work-ledger .hero-enter { min-width: 0; padding: 0 1rem; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid rgba(0,44,95,0.11); }
+.work-ledger-label span, .work-ledger-cell span { color: #718393; font-family: var(--mono); font-size: 0.54rem; font-weight: 700; letter-spacing: 0.07em; }
+.work-ledger-label strong { margin-top: 0.38rem; color: var(--hyundai-blue); font-size: 0.86rem; font-weight: 680; }
+.work-ledger-cell { position: relative; transition: background 160ms ease; }
+.work-ledger-cell:hover { background: rgba(255,255,255,0.92); }
+.work-ledger-cell > span { display: flex; align-items: center; gap: 0.42rem; }
+.work-ledger-cell > span svg { color: var(--active-blue); stroke-width: 1.8; }
+.work-ledger-cell strong, .work-ledger-cell small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.work-ledger-cell strong { margin-top: 0.48rem; color: var(--ink); font-size: 0.76rem; font-weight: 660; }
+.work-ledger-cell small { margin-top: 0.24rem; color: var(--quiet); font-size: 0.62rem; }
+.work-ledger-cell.is-urgent::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 2px; background: var(--hyundai-gold); }
+.work-ledger-cell.is-urgent > span, .work-ledger-cell.is-urgent > span svg { color: var(--warning); }
+.active-model-cell strong { color: var(--hyundai-blue); font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.025em; }
+.hero-work-ledger .hero-enter { width: auto; height: auto; flex-direction: row; align-items: center; justify-content: space-between; border-right: 0; }
+.hero-work-ledger .hero-enter span { line-height: 1.45; }
+
 .dashboard { width: 100%; max-width: 112rem; margin: 0 auto; padding: 2rem clamp(1.5rem, 2.8vw, 3.25rem) 0; scroll-margin-top: 4rem; }
 .operations-heading { min-height: 6.8rem; display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; padding-bottom: 1.4rem; }
 .page-index, .section-titlebar > div > span { color: var(--quiet); font-size: 0.67rem; font-weight: 600; letter-spacing: 0; }
@@ -425,11 +474,13 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--active-blue); o
   .decision-rail { grid-template-columns: 11rem minmax(15rem, 1fr) minmax(15rem, 1fr); overflow-x: auto; }
   .run-row { grid-template-columns: 4.8rem minmax(11rem, 1fr) minmax(7rem, 0.7fr) auto; }
   .run-eta { display: none; }
-  .prizm-hero { min-height: auto; }
-  .prism-canvas { min-height: 25rem; }
-  .prism-canvas svg { width: 112%; max-width: none; margin-left: -6%; }
-  .hero-statement { grid-template-columns: minmax(24rem, 1fr) auto; }
-  .hero-legend { display: none; }
+  .prizm-hero { height: auto; min-height: 34rem; grid-template-rows: 4.5rem minmax(18rem, 1fr) 6.6rem; }
+  .hero-wordmark { width: 8.3rem; }
+  .hero-definition h1 { font-size: 0.78rem; }
+  .hero-definition p { font-size: 0.66rem; }
+  .prism-canvas { min-height: 18rem; }
+  .prism-canvas svg { width: 116%; max-width: none; margin-left: -8%; }
+  .hero-work-ledger { overflow-x: auto; grid-template-columns: 8rem repeat(4, minmax(11rem, 1fr)) 8rem; }
 }
 
 @media (max-width: 767px) {
@@ -456,19 +507,22 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--active-blue); o
   .run-row { grid-template-columns: 4.3rem minmax(10rem, 1fr) auto; padding: 0 0.9rem; gap: 0.7rem; }
   .run-progress { display: none; }
   .dashboard-footer { flex-direction: column; line-height: 1.55; }
-  .prizm-hero { min-height: calc(100svh - 3.75rem); grid-template-rows: auto minmax(20rem, 1fr) auto; padding: 1rem 1rem 1.2rem; }
-  .hero-meta { font-size: 0.51rem; }
-  .hero-meta > span:first-child { max-width: 11rem; line-height: 1.45; }
-  .prism-canvas { min-height: 21rem; }
-  .prism-canvas svg { width: 178%; margin-left: -45%; }
-  .stream-control { right: 0; bottom: 0; min-width: 14rem; }
+  .prizm-hero { height: auto; min-height: calc(100svh - 3.75rem); grid-template-rows: 4.7rem minmax(20rem, 1fr) 6.5rem; padding: 0 1rem; }
+  .hero-brand-lockup { gap: 0.72rem; }
+  .hero-wordmark { width: 7.35rem; }
+  .hero-definition { padding-left: 0.72rem; }
+  .hero-definition h1 { font-size: 0.66rem; line-height: 1.2; }
+  .hero-definition p { margin-top: 0.12rem; font-size: 0.58rem; line-height: 1.2; }
+  .hero-network-state { display: none; }
+  .prism-canvas { min-height: 20rem; margin: 0 -1rem; }
+  .prism-canvas svg { width: 170%; height: 100%; margin-left: -47%; }
+  .stream-control { right: 0.7rem; bottom: 0.5rem; min-width: 13.5rem; }
   .stream-summary span { font-size: 0.52rem; }
   .stream-summary strong, .stream-summary small { display: none; }
-  .hero-statement { grid-template-columns: 1fr; gap: 1.1rem; padding-top: 1rem; }
-  .hero-sequence { margin-bottom: 0.52rem; }
-  .hero-statement h1 { font-size: clamp(2.2rem, 10vw, 3.4rem); }
-  .hero-statement h1 strong { max-width: 24rem; font-size: 0.46em; line-height: 1.12; }
-  .hero-enter { width: 100%; height: 3.5rem; }
+  .hero-work-ledger { grid-template-columns: repeat(4, minmax(12rem, 1fr)) minmax(8rem, 0.7fr); margin: 0 -1rem; }
+  .work-ledger-label { display: none; }
+  .work-ledger-label, .work-ledger-cell, .hero-work-ledger .hero-enter { padding-right: 0.85rem; padding-left: 0.85rem; }
+  .hero-work-ledger .hero-enter { min-width: 8rem; width: auto; height: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
