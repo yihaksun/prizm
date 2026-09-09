@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 130" role="img" aria-labelledby="title desc">
+  <title id="title">PRIZM transparent logo v1</title>
+  <desc id="desc">Transparent geometric PRIZM wordmark for use on light backgrounds.</desc>
+  <g transform="translate(29.5)" fill="#06162f">
+    <path fill-rule="evenodd" d="M0 0h88l24 22v38L88 82H31v48H0V0Zm31 25v32h47l5-5V30l-5-5H31Z"/>
+    <g transform="translate(140)">
+      <path fill-rule="evenodd" d="M0 0h88l24 22v36L91 78l36 52H88L56 82H31v48H0V0Zm31 25v32h47l5-5V30l-5-5H31Z"/>
+    </g>
+    <path d="M292 0h31v130h-31z"/>
+    <g transform="translate(353)">
+      <path d="M0 0h140l-27 30H27L0 0Z"/>
+      <path d="M0 130h140l-27-30H27L0 130Z"/>
+      <path d="m105 28h31L35 102H4L105 28Z" fill="#008fd5"/>
+      <path d="m112 28h8L20 102h-8l100-74Z" fill="#52d7ff" opacity=".95"/>
+    </g>
+    <path d="M523 0h34l45 68 45-68h34v130h-31V51l-48 71-48-71v79h-31V0Z"/>
+  </g>
+</svg>
