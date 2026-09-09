@@ -68,12 +68,12 @@ export function PrizmHero() {
           <Image className="hero-wordmark" src="/prizm-eforest.svg" alt="E-FOREST PRIZM" width={920} height={300} priority />
           <div className="hero-definition">
             <h1 id="prizm-hero-title">
-              <span className="definition-line"><small>Pipeline for</small><strong>Resource Innovation</strong><b>,</b></span>
+              <span className="definition-line"><small>Pipeline for</small><strong>Resource Integration</strong><b>,</b></span>
               <span className="definition-line"><small>driving</small><strong><em>Z</em>ero-Loss Manufacturing</strong><b>.</b></span>
             </h1>
           </div>
         </div>
-        <span className="hero-network-state"><i /> GLOBAL NETWORK · 12 SITES CONNECTED</span>
+        <div className="hero-network-state"><span><i /> GLOBAL NETWORK</span><strong>12 SITES CONNECTED</strong></div>
       </header>
 
       <div className="prism-canvas">
