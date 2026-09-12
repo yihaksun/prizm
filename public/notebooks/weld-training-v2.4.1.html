@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>차체 용접 비드 결함 검출 모델 학습</title>
+  <style>
+    :root { color-scheme: light; --jp-border: #dfe2e5; --jp-code: #f5f5f5; --jp-blue: #1976d2; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #202124; background: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif; font-size: 14px; line-height: 1.55; }
+    .jp-Notebook { width: min(980px, 100%); margin: 0 auto; padding: 36px 34px 90px; }
+    .nb-meta { margin-bottom: 30px; padding-bottom: 12px; display: flex; justify-content: space-between; gap: 16px; color: #74787d; border-bottom: 1px solid var(--jp-border); font-size: 12px; }
+    .nb-meta strong { color: #3b4045; font-weight: 600; }
+    .jp-Cell { position: relative; margin: 0 0 18px; }
+    .cell-tag { width: max-content; margin: 0 0 5px 74px; padding: 2px 7px; color: #426b7b; background: #edf4f7; border: 1px solid #cbdde4; border-radius: 10px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 10px; line-height: 1.25; }
+    .cell-tag.is-injected { color: #34705e; background: #edf7f3; border-color: #c5dfd5; }
+    .jp-MarkdownOutput { padding-left: 74px; }
+    h1 { margin: 0 0 14px; color: #1f2328; font-size: 29px; line-height: 1.3; letter-spacing: -0.035em; }
+    h2 { margin: 34px 0 10px; padding-bottom: 7px; border-bottom: 1px solid var(--jp-border); font-size: 20px; letter-spacing: -0.025em; }
+    h3 { margin: 26px 0 8px; font-size: 16px; }
+    p { margin: 8px 0; }
+    code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    code { color: #31485d; background: #f4f6f8; padding: 1px 4px; border-radius: 2px; font-size: 12px; }
+    .jp-InputArea, .jp-OutputArea-child { display: grid; grid-template-columns: 64px minmax(0, 1fr); }
+    .jp-InputPrompt, .jp-OutputPrompt { padding: 8px 9px 0 0; color: var(--jp-blue); font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; text-align: right; user-select: none; }
+    .jp-OutputPrompt { color: #b24c3a; }
+    .jp-CodeMirrorEditor { min-width: 0; overflow-x: auto; background: var(--jp-code); border: 1px solid var(--jp-border); }
+    .jp-CodeMirrorEditor pre { margin: 0; padding: 11px 13px; color: #24292f; font-size: 12px; line-height: 1.58; tab-size: 4; }
+    .kw { color: #a626a4; } .fn { color: #4078f2; } .str { color: #50a14f; } .num { color: #986801; } .cm { color: #7f848e; font-style: italic; }
+    .jp-OutputArea-output { min-width: 0; padding: 8px 12px; overflow-x: auto; }
+    .jp-OutputArea-output pre { margin: 0; color: #333; font-size: 12px; white-space: pre-wrap; }
+    .jp-RenderedHTMLCommon table { width: 100%; margin: 4px 0 12px; border-collapse: collapse; font-size: 12px; text-align: right; }
+    .jp-RenderedHTMLCommon th, .jp-RenderedHTMLCommon td { padding: 7px 9px; border: 1px solid #d8dadd; }
+    .jp-RenderedHTMLCommon th { color: #41464b; background: #f5f6f7; font-weight: 600; }
+    .jp-RenderedHTMLCommon th:first-child, .jp-RenderedHTMLCommon td:first-child { text-align: left; }
+    .callout { margin: 12px 0 0 74px; padding: 12px 14px; color: #275743; background: #f1f8f5; border-left: 3px solid #2e8b68; font-size: 13px; }
+    .chart { padding: 12px 8px 5px; border: 1px solid #e1e4e7; background: #fff; }
+    .chart svg { width: 100%; height: auto; display: block; }
+    .chart-caption { margin-top: 5px; color: #686d73; font-size: 11px; text-align: center; }
+    .gate { margin-top: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; color: #235744; background: #edf7f3; border: 1px solid #bcdccb; }
+    .gate span { font-size: 12px; }
+    .gate b { padding: 3px 8px; color: #176444; border: 1px solid #70aa90; font-family: monospace; font-size: 12px; }
+    @media (max-width: 700px) {
+      .jp-Notebook { padding: 24px 14px 60px; }
+      .jp-MarkdownOutput { padding-left: 0; }
+      .jp-InputArea, .jp-OutputArea-child { grid-template-columns: 42px minmax(0, 1fr); }
+      .jp-InputPrompt, .jp-OutputPrompt { padding-right: 5px; font-size: 10px; }
+      .callout { margin-left: 42px; }
+      .cell-tag { margin-left: 42px; }
+      h1 { font-size: 23px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
+    <header class="nb-meta"><span><strong>Python 3 (ipykernel)</strong></span><span>Last executed 2026.09.12 14:26 KST</span></header>
+
+    <section class="jp-Cell jp-MarkdownCell">
+      <div class="jp-MarkdownOutput jp-RenderedHTMLCommon">
+        <h1 id="overview">차체 용접 비드 결함 검출 모델 학습</h1>
+        <p>울산 차체 2라인의 용접 검사 이미지에서 <strong>비드 누락, 기공, 균열</strong>을 검출하는 YOLO 12 모델을 학습합니다.</p>
+        <p>PRIZM 실행 설정의 파라미터를 그대로 받아 데이터와 기준 모델을 내려받고, 학습 결과를 새 모델 버전으로 등록합니다.</p>
+        <h2 id="data">1. 파라미터와 자산 연결</h2>
+      </div>
+    </section>
+
+    <section class="jp-Cell jp-CodeCell">
+      <div class="cell-tag">parameters</div>
+      <div class="jp-InputArea">
+        <div class="jp-InputPrompt">In&nbsp;[1]:</div>
+        <div class="jp-CodeMirrorEditor"><pre><span class="kw">import</span> prizm
+<span class="kw">import</span> mlflow
+<span class="kw">from</span> ultralytics <span class="kw">import</span> YOLO
+
+<span class="cm"># Papermill parameter defaults</span>
+data_id = <span class="str">"PRJ000212-D-0001"</span>
+model_id = <span class="str">"PRJ000001-M-0012"</span>
+model_version = <span class="str">"v12.0.0"</span>
+epochs = <span class="num">80</span>
+batch_size = <span class="num">16</span>
+image_size = <span class="num">1024</span>
+seed = <span class="num">42</span></pre></div>
+      </div>
+    </section>
+
+    <section class="jp-Cell jp-CodeCell">
+      <div class="cell-tag is-injected">injected-parameters</div>
+      <div class="jp-InputArea">
+        <div class="jp-InputPrompt">In&nbsp;[2]:</div>
+        <div class="jp-CodeMirrorEditor"><pre><span class="cm"># Parameters injected by PRIZM / Papermill at execution time</span>
+data_id = <span class="str">"PRJ000212-D-0001"</span>
+model_id = <span class="str">"PRJ000001-M-0012"</span>
+model_version = <span class="str">"v12.0.0"</span>
+epochs = <span class="num">80</span>
+batch_size = <span class="num">16</span>
+image_size = <span class="num">1024</span>
+seed = <span class="num">42</span></pre></div>
+      </div>
+    </section>
+
+    <section class="jp-Cell jp-CodeCell">
+      <div class="jp-InputArea">
+        <div class="jp-InputPrompt">In&nbsp;[3]:</div>
+        <div class="jp-CodeMirrorEditor"><pre><span class="cm"># version을 생략하면 실행 시점의 최신 데이터 버전을 받습니다.</span>
+dataset = prizm.data.<span class="fn">download</span>(
+    id=data_id,
+    path=<span class="str">"/workspace/input/data"</span>,
+)
+base_model = prizm.model.<span class="fn">download</span>(
+    id=model_id,
+    version=model_version,
+    path=<span class="str">"/workspace/input/model"</span>,
+)
+
+dataset.<span class="fn">summary</span>()</pre></div>
+      </div>
+      <div class="jp-OutputArea">
+        <div class="jp-OutputArea-child">
+          <div class="jp-OutputPrompt">Out[3]:</div>
+          <div class="jp-OutputArea-output jp-RenderedHTMLCommon">
+            <table><thead><tr><th>asset</th><th>resolved version</th><th>local path</th><th>status</th></tr></thead><tbody><tr><td>PRJ000212-D-0001</td><td>v13 · latest</td><td>/workspace/input/data</td><td>READY</td></tr><tr><td>PRJ000001-M-0012</td><td>v12.0.0</td><td>/workspace/input/model</td><td>READY</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="callout">✓ 데이터 <strong>v13 · 43,180 images</strong>와 기준 모델 <strong>YOLO 12 Medium · v12.0.0</strong> 다운로드 완료</div>
+
+    <section class="jp-Cell jp-MarkdownCell"><div class="jp-MarkdownOutput jp-RenderedHTMLCommon"><h2 id="training">2. 파라미터 기반 모델 학습</h2><p>입력된 변수만 바꾸면 같은 Notebook으로 다른 데이터와 기준 모델을 재사용할 수 있습니다.</p></div></section>
+    <section class="jp-Cell jp-CodeCell">
+      <div class="jp-InputArea">
+        <div class="jp-InputPrompt">In&nbsp;[4]:</div>
+        <div class="jp-CodeMirrorEditor"><pre><span class="cm"># PRIZM은 인증, Tracking URI, Experiment, 공통 lineage tag만 설정합니다.</span>
+tracking = prizm.tracking.<span class="fn">configure_mlflow</span>(
+    project_id=<span class="str">"PRJ000212"</span>
+)
+mlflow.<span class="fn">set_experiment</span>(tracking.experiment_name)
+run = mlflow.<span class="fn">start_run</span>(
+    run_name=<span class="str">f"weld-yolo12-{data_id}"</span>,
+    log_system_metrics=<span class="kw">True</span>,
+)
+mlflow.<span class="fn">log_params</span>({
+    <span class="str">"data_id"</span>: data_id,
+    <span class="str">"base_model_id"</span>: model_id,
+    <span class="str">"base_model_version"</span>: model_version,
+    <span class="str">"epochs"</span>: epochs,
+    <span class="str">"batch_size"</span>: batch_size,
+    <span class="str">"image_size"</span>: image_size,
+    <span class="str">"seed"</span>: seed,
+})
+
+model = <span class="fn">YOLO</span>(base_model.path)
+result = model.<span class="fn">train</span>(
+    data=dataset.manifest,
+    epochs=epochs,
+    batch=batch_size,
+    imgsz=image_size,
+    seed=seed,
+)
+mlflow.<span class="fn">log_artifact</span>(result.best, artifact_path=<span class="str">"model"</span>)</pre></div>
+      </div>
+      <div class="jp-OutputArea">
+        <div class="jp-OutputArea-child"><div class="jp-OutputPrompt"></div><div class="jp-OutputArea-output"><pre>Ultralytics YOLO 12 · Python 3.11.9 · torch 2.4.0+cu124
+GPU: NVIDIA A100 20GB · epochs 80 · batch 16 · imgsz 1024
+80/80  box_loss 0.183  cls_loss 0.091  mAP50 0.967  01:42:18</pre></div></div>
+        <div class="jp-OutputArea-child">
+          <div class="jp-OutputPrompt">Out[4]:</div>
+          <div class="jp-OutputArea-output">
+            <div class="chart" aria-label="학습과 검증 mAP50 곡선">
+              <svg viewBox="0 0 720 280" role="img">
+                <rect width="720" height="280" fill="#fff" />
+                <g stroke="#e7e9eb" stroke-width="1"><path d="M54 28H696M54 83H696M54 138H696M54 193H696M54 248H696" /></g>
+                <g fill="#6c7278" font-family="sans-serif" font-size="10"><text x="18" y="32">1.0</text><text x="18" y="87">0.8</text><text x="18" y="142">0.6</text><text x="18" y="197">0.4</text><text x="18" y="252">0.2</text><text x="50" y="270">0</text><text x="205" y="270">20</text><text x="365" y="270">40</text><text x="525" y="270">60</text><text x="680" y="270">80</text></g>
+                <path d="M54 218 C105 181 138 154 190 128 S276 84 326 69 S416 50 466 43 S560 36 696 32" fill="none" stroke="#1976d2" stroke-width="3" />
+                <path d="M54 230 C102 201 145 166 190 143 S276 100 326 81 S420 61 468 53 S566 43 696 37" fill="none" stroke="#ef6c57" stroke-width="3" />
+                <path d="M54 44H696" fill="none" stroke="#6f8f79" stroke-dasharray="6 5" /><text x="565" y="38" fill="#4c7458" font-family="sans-serif" font-size="10">quality gate 0.94</text>
+                <g font-family="sans-serif" font-size="11"><circle cx="575" cy="16" r="4" fill="#1976d2"/><text x="585" y="20" fill="#3e444a">train</text><circle cx="630" cy="16" r="4" fill="#ef6c57"/><text x="640" y="20" fill="#3e444a">validation</text></g>
+              </svg>
+              <div class="chart-caption">Figure 1. mAP50 by epoch</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="jp-Cell jp-MarkdownCell"><div class="jp-MarkdownOutput jp-RenderedHTMLCommon"><h2 id="evaluation">3. 평가 및 모델 등록</h2><p>학습 산출물을 표준 Gate로 평가하고, 계보 정보와 함께 모델 자산에 새 버전을 등록합니다.</p></div></section>
+    <section class="jp-Cell jp-CodeCell">
+      <div class="jp-InputArea">
+        <div class="jp-InputPrompt">In&nbsp;[5]:</div>
+        <div class="jp-CodeMirrorEditor"><pre>metrics = prizm.model.<span class="fn">evaluate</span>(
+    artifact=result.best,
+    dataset=dataset,
+    gate=<span class="str">"WELD-DETECTION-GATE:v3"</span>,
+)
+mlflow.<span class="fn">log_metrics</span>(metrics)
+metrics</pre></div>
+      </div>
+      <div class="jp-OutputArea">
+        <div class="jp-OutputArea-child">
+          <div class="jp-OutputPrompt">Out[5]:</div>
+          <div class="jp-OutputArea-output jp-RenderedHTMLCommon">
+            <table><thead><tr><th>metric</th><th>result</th><th>gate</th><th>status</th></tr></thead><tbody><tr><td>mAP50</td><td>0.967</td><td>≥ 0.940</td><td>PASS</td></tr><tr><td>Precision</td><td>0.953</td><td>≥ 0.930</td><td>PASS</td></tr><tr><td>Recall</td><td>0.948</td><td>≥ 0.920</td><td>PASS</td></tr><tr><td>False reject</td><td>1.8%</td><td>≤ 2.5%</td><td>PASS</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="jp-Cell jp-CodeCell">
+      <div class="jp-InputArea">
+        <div class="jp-InputPrompt">In&nbsp;[6]:</div>
+        <div class="jp-CodeMirrorEditor"><pre><span class="cm"># MLflow 실행을 종료한 뒤 run_id만 PRIZM에 전달합니다.</span>
+mlflow_run_id = run.info.run_id
+mlflow.<span class="fn">end_run</span>()
+
+registered_model = prizm.model.<span class="fn">upload</span>(
+    id=<span class="str">"PRJ000212-M-0001"</span>,
+    mlflow_run_id=mlflow_run_id,
+    artifact_path=<span class="str">"model/best.pt"</span>,
+)
+registered_model</pre></div>
+      </div>
+      <div class="jp-OutputArea">
+        <div class="jp-OutputArea-child">
+          <div class="jp-OutputPrompt">Out[6]:</div>
+          <div class="jp-OutputArea-output">
+            <pre>ModelAsset(id='PRJ000212-M-0001', version='v2.5.0-rc1', stage='CANDIDATE')</pre>
+            <div class="gate"><span><strong>자동 버전 발급 · MLflow 실행 및 lineage 연결 완료</strong><br />PRJ000212-M-0001 · v2.5.0-rc1 · MLflow Run 7e19c2a · PRJ000212-D-0001:v13</span><b>REGISTERED</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

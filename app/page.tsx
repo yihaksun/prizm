@@ -3,49 +3,80 @@ import {
   ArrowRight,
   ArrowUpRight,
   Bell,
-  Boxes,
   ChevronDown,
+  CheckSquare,
   CircleHelp,
   Command,
+  Cpu,
+  Database,
   Factory,
   Layers3,
   LayoutDashboard,
   LibraryBig,
   Play,
+  Rocket,
   Search,
-  ServerCog,
+  Settings2,
   ShieldCheck,
   SlidersHorizontal,
+  Star,
   Workflow,
+  type LucideIcon,
 } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { PrizmHero } from '@/components/prizm-hero';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-const navItems = [
-  { label: 'Overview', href: '#top', icon: LayoutDashboard, active: true },
-  { label: 'AI Catalog', href: '#assets', icon: LibraryBig },
-  { label: 'Pipelines', href: '#lifecycle', icon: Workflow },
-  { label: 'Deployments', href: '#projects', icon: Boxes },
-  { label: 'Observability', href: '#attention', icon: Activity },
+type NavGroup = { label: string; icon: LucideIcon; badge?: number; active?: boolean; href?: string; children?: { label: string; href: string }[] };
+
+const myWorkGroups: NavGroup[] = [
+  { label: '나의 작업', icon: CheckSquare, badge: 2, children: [{ label: '할 일', href: '/work/tasks' }, { label: '처리 이력', href: '#history' }] },
+  { label: '즐겨찾기', icon: Star, children: [{ label: '즐겨찾는 과제', href: '#flow' }, { label: '즐겨찾는 자산', href: '#assets' }] },
+];
+
+const platformGroups: NavGroup[] = [
+  { label: '대시보드', icon: LayoutDashboard, active: true, children: [{ label: '홈', href: '#operations' }, { label: '전사 현황', href: '#contribution' }, { label: '거점 현황', href: '#sites' }, { label: '자원 현황', href: '#execute' }] },
+  { label: '과제관리', icon: Layers3, href: '/projects' },
+  { label: '데이터관리', icon: Database, children: [{ label: '이미지 카탈로그', href: '/image-catalog/review' }, { label: '데이터 연결 매뉴얼', href: '#assets' }] },
+  { label: '자산관리', icon: LibraryBig, children: [{ label: '모델 자산', href: '/assets/models' }, { label: '코드 자산', href: '/assets/code' }, { label: '데이터 자산', href: '/assets/data' }, { label: '파이프라인 개발 매뉴얼', href: '#flow' }, { label: 'SDK 매뉴얼', href: '#flow' }] },
+  { label: '실행관리', icon: Workflow, children: [{ label: '실험 대시보드', href: '/assets/code?pipeline=1' }] },
+  { label: '평가관리', icon: ShieldCheck, children: [{ label: '모델 평가', href: '/evaluation/models' }, { label: '자동 평가 기준 관리', href: '#evidence' }] },
+  { label: '배포관리', icon: Rocket, children: [{ label: '배포 현황', href: '#sites' }, { label: '배포 요청', href: '#attention' }, { label: '단계 승격', href: '#attention' }, { label: '거점 확산', href: '#sites' }, { label: '버전·롤백', href: '#history' }] },
+  { label: '모니터링', icon: Activity, badge: 1, children: [{ label: '모델 성능', href: '/monitoring/models' }, { label: '데이터 드리프트', href: '/monitoring/models' }, { label: '서비스 상태', href: '#sites' }, { label: '알림·이벤트', href: '#history' }, { label: '이슈·조치', href: '#attention' }] },
+  { label: '자원관리', icon: Cpu, children: [{ label: '실행 자원 관리', href: '/resources/compute' }, { label: '실행 환경 관리', href: '/resources/environments' }] },
+  { label: '관리자', icon: Settings2, children: [{ label: '사용자·조직', href: '#top' }, { label: '역할·권한', href: '#top' }, { label: '정책·승인', href: '#top' }, { label: '환경·자원', href: '#top' }, { label: '연동·감사', href: '#top' }] },
 ];
 
 const flowStages = [
-  { index: '01', code: 'DATA', label: '데이터 준비', value: '328', unit: 'ASSETS', meta: '+26 TODAY' },
-  { index: '02', code: 'TRAIN', label: '학습 실행', value: '08', unit: 'RUNNING', meta: '2 QUEUED' },
-  { index: '03', code: 'VALIDATE', label: '검증 대기', value: '03', unit: 'REVIEWS', meta: '1 DUE' },
-  { index: '04', code: 'PRODUCTION', label: '운영 배포', value: '64', unit: 'MODELS', meta: '+2 THIS WEEK' },
-  { index: '05', code: 'WATCH', label: '성능 관찰', value: '02', unit: 'SIGNALS', meta: '1 ACTION' },
+  { code: 'INGEST', label: '수집', value: '328', unit: 'ASSETS', meta: '+26 TODAY' },
+  { code: 'CURATE', label: '정제', value: '42', unit: 'READY', meta: '3 CHECK' },
+  { code: 'EXPERIMENT', label: '실험', value: '18', unit: 'ACTIVE', meta: '6 OWNERS' },
+  { code: 'TRAIN', label: '학습', value: '08', unit: 'RUNNING', meta: '2 QUEUED' },
+  { code: 'EVALUATE', label: '평가', value: '03', unit: 'GATES', meta: '1 DUE' },
+  { code: 'REGISTER', label: '등록', value: '76', unit: 'MODELS', meta: '12 CANDIDATE' },
+  { code: 'DEPLOY', label: '배포', value: '64', unit: 'LIVE', meta: '+2 THIS WEEK' },
+  { code: 'OBSERVE', label: '관찰', value: '02', unit: 'SIGNALS', meta: '1 ACTION' },
+];
+
+const contributionKpis = [
+  { code: 'TOTAL VALUE', label: '누적 재무 기여', value: '184.6억 원', detail: '2026 YTD · 검증 완료 기준', tone: 'total' },
+  { code: 'INFRA', label: '인프라 투자 절감', value: '72.4억 원', detail: '중앙 GPU·Runtime 공동 활용', meta: '39.2%' },
+  { code: 'LABOR', label: '운영 인건비 절감', value: '58.7억 원', detail: '자동화 12.8만 시간 환산', meta: '31.8%' },
+  { code: 'LOSS', label: '품질·비가동 손실 회피', value: '53.5억 원', detail: '이상 조기탐지·안전한 롤백', meta: '29.0%' },
+];
+
+const evidenceRows = [
+  { model: 'WeldNet 2.4', site: '울산 · 차체 3라인', baseline: '수동검사 100%', current: '18%', impact: '₩21.8억', evidence: '표본 42K · 438h/월' },
+  { model: 'SurfaceNet 1.8', site: '아산 · 도장 2라인', baseline: '검출률 91.2%', current: '97.8%', impact: '₩13.6억', evidence: 'Gate 7/7 · 재검사 −31%' },
+  { model: 'AssemblyNet 3.1', site: '전주 · 의장', baseline: '비가동 14.2h', current: '8.1h', impact: '₩8.4억', evidence: '12주 검증 · −43.0%' },
 ];
 
 const plants = [
@@ -73,74 +104,74 @@ export default function Home() {
       <Sidebar className="app-sidebar">
         <SidebarHeader className="sidebar-header">
           <a href="#top" className="wordmark" aria-label="PRIZM 홈">
-            <Image src="/prizm-logo-dark.svg" alt="PRIZM" width={920} height={300} priority />
+            <Image src="/prizm-logo-dark-rainbow.svg" alt="PRIZM" width={920} height={300} priority />
           </a>
         </SidebarHeader>
 
         <SidebarContent>
           <button className="workspace-switcher" type="button">
             <span className="workspace-symbol"><Factory size={18} /></span>
-            <span><strong>제조솔루션본부</strong><small>Enterprise workspace</small></span>
+              <span><strong>제조솔루션본부</strong><small>Manufacturing Solution Div.</small></span>
             <ChevronDown size={15} />
           </button>
 
-          <div className="nav-section-label">Platform</div>
-          <SidebarMenu className="primary-nav">
-            {navItems.map((item) => (
-              <SidebarMenuItem key={item.label}>
-                <SidebarMenuButton render={<a href={item.href} aria-label={item.label} />} isActive={item.active} className="primary-nav-item">
-                  <item.icon /><span>{item.label}</span>{item.active && <i className="selected-mark" />}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
+          <nav className="sidebar-nav" aria-label="주요 메뉴">
+            <div className="nav-section-label">My work</div>
+            <div className="nav-accordion nav-accordion-compact">
+              {myWorkGroups.map((group) => (
+                <details className="nav-disclosure" key={group.label} name="my-work-navigation">
+                  <summary>
+                    <group.icon /><span>{group.label}</span>{group.badge && <b className="nav-badge urgent">{group.badge}</b>}<ChevronDown className="nav-chevron" />
+                  </summary>
+                  <div className="nav-submenu">
+                    {group.children?.map((child) => child.href.startsWith('/')
+                      ? <Link href={child.href} key={child.label}>{child.label}</Link>
+                      : <a className="is-unavailable" href={child.href} title="화면 준비 중" key={child.label}>{child.label}</a>)}
+                  </div>
+                </details>
+              ))}
+            </div>
 
-          <div className="nav-section-label nav-section-spaced">My work</div>
-          <SidebarMenu className="primary-nav">
-            <SidebarMenuItem>
-              <SidebarMenuButton render={<a href="#projects" aria-label="프로젝트" />} className="primary-nav-item">
-                <Layers3 /><span>프로젝트</span><b className="nav-badge">3</b>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton render={<a href="#attention" aria-label="승인 및 검토" />} className="primary-nav-item">
-                <ShieldCheck /><span>승인 및 검토</span><b className="nav-badge urgent">2</b>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton render={<a href="#lifecycle" aria-label="Runtime Catalog" />} className="primary-nav-item">
-                <ServerCog /><span>Runtime Catalog</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+            <div className="nav-section-label nav-section-spaced">Platform</div>
+            <div className="nav-accordion">
+              {platformGroups.map((group) => group.href ? <Link className="nav-direct" href={group.href} key={group.label}><group.icon /><span>{group.label}</span></Link> : (
+                <details className={group.active ? 'nav-disclosure is-active' : 'nav-disclosure'} key={group.label} name="platform-navigation" open={group.active}>
+                  <summary>
+                    <group.icon /><span>{group.label}</span>{group.badge && <b className="nav-badge urgent">{group.badge}</b>}<ChevronDown className="nav-chevron" />
+                  </summary>
+                  <div className="nav-submenu">
+                    {group.children?.map((child, index) => { const unavailable = group.label !== '대시보드' && child.href.startsWith('#'); const classes = [group.active && index === 0 ? 'is-current' : '', unavailable ? 'is-unavailable' : ''].filter(Boolean).join(' '); return <Link className={classes} href={child.href} title={unavailable ? '화면 준비 중' : undefined} key={child.label}>{child.label}</Link>; })}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </nav>
 
-          <div className="environment-card">
-            <div><span className="environment-dot" />PRODUCTION</div>
-            <strong>KR · GLOBAL NETWORK</strong>
-            <small>Platform version 2.8.4</small>
-          </div>
         </SidebarContent>
 
         <SidebarFooter className="sidebar-footer">
           <a href="#top" className="help-link"><CircleHelp size={17} /><span>도움말 및 지원</span><ArrowUpRight size={14} /></a>
-          <div className="hyundai-lockup"><strong>HYUNDAI</strong><span>MOTOR COMPANY</span></div>
+          <div className="sidebar-brand-footer">
+            <div className="sidebar-brand-meta"><Image src="/eforest-wordmark.svg" alt="E-FOREST" width={58} height={7} style={{ width: '58px', height: 'auto' }} /><i /><span>PRIZM v2.8.4</span></div>
+            <small className="sidebar-copyright"><span className="copyright-symbol">©</span><span>2026 HYUNDAI MOTOR COMPANY</span></small>
+          </div>
         </SidebarFooter>
       </Sidebar>
 
       <div className="app-shell" id="top">
         <header className="topbar">
           <div className="topbar-path">
-            <SidebarTrigger aria-label="메뉴 열기 또는 닫기" /><strong>Overview</strong>
+            <SidebarTrigger aria-label="메뉴 열기 또는 닫기" /><strong>홈</strong>
           </div>
           <button className="command-search" type="button">
-            <Search size={16} /><span>프로젝트, 자산, 모델 검색</span><kbd>⌘ K</kbd>
+            <Search size={16} /><span>과제, 자산, 모델 검색</span><kbd>⌘ K</kbd>
           </button>
           <div className="topbar-actions">
             <span className="system-health"><i /> 시스템 정상</span>
             <button type="button" className="icon-button" aria-label="알림"><Bell size={18} /><i /></button>
             <span className="topbar-divider" />
             <button className="profile" type="button">
-              <span className="avatar">ML</span><span><strong>MLOps 엔지니어</strong><small>Manufacturing AI</small></span><ChevronDown size={14} />
+              <span className="avatar">HS</span><span><strong>이학선 책임매니저</strong><small>제조AI기술개발팀</small></span><ChevronDown size={14} />
             </button>
           </div>
         </header>
@@ -148,93 +179,82 @@ export default function Home() {
         <PrizmHero />
 
         <main className="dashboard" id="operations">
-          <section className="operations-heading">
-            <div>
-              <span className="page-index">9월 9일 수요일 · 주간조 · 08:42 KST</span>
-              <h1>제조 AI 운용 현황</h1>
-              <p>12개 생산 거점의 흐름과 오늘 판단할 항목을 한 화면에 모았습니다.</p>
+          <section className="operations-commandbar" aria-label="운영 조회 및 실행">
+            <div className="context-controls">
+              <button type="button"><Factory size={14} /> 전체 거점 <ChevronDown size={13} /></button>
+              <button type="button">PRODUCTION <ChevronDown size={13} /></button>
+              <button type="button">최근 24시간 <ChevronDown size={13} /></button>
             </div>
-            <div className="heading-actions">
+            <div className="commandbar-actions">
               <span className="demo-disclosure">시연용 데이터</span>
-              <button type="button" className="quiet-action"><Command size={15} /> 빠른 실행</button>
-              <button type="button" className="run-action"><Play size={14} fill="currentColor" /> 학습 실행</button>
+              <button type="button" className="quiet-action"><Command size={14} /> 빠른 실행</button>
+              <button type="button" className="run-action"><Play size={13} fill="currentColor" /> 학습 실행</button>
             </div>
           </section>
 
-          <section className="operations-ledger" aria-label="제조 AI 실시간 운영판">
-            <header className="ledger-toolbar">
-              <div className="live-label"><span /> LIVE OPERATIONS</div>
-              <div className="context-controls">
-                <button type="button"><Factory size={14} /> 전체 거점 <ChevronDown size={13} /></button>
-                <button type="button">PRODUCTION <ChevronDown size={13} /></button>
-                <button type="button">최근 24시간 <ChevronDown size={13} /></button>
-                <span className="last-sync">LAST SYNC 08:42:18 KST</span>
+          <section className="dashboard-section attention-section" id="attention" aria-labelledby="attention-title">
+            <div className="section-titlebar">
+              <div>
+                <span>01 / 오늘의 작업</span>
+                <h2 id="attention-title">확인이 필요한 작업 <em className="section-count">2</em></h2>
+                <p>오늘 마감 2건 · 성능 검토 1건 · 배포 승인 1건</p>
               </div>
-            </header>
-
-            <div className="ledger-body">
-              <div className="network-readout">
-                <div className="network-status-strip">
-                  <div><span>생산 거점</span><strong>12 / 12</strong><small>연결</small></div>
-                  <div><span>운영 모델</span><strong>64</strong><small>63 정상 · 1 관찰</small></div>
-                  <div><span>추론 처리</span><strong>2.48M</strong><small>최근 24시간</small></div>
-                  <div><span>서비스 가용성</span><strong>99.8%</strong><small>SLO 99.5%</small></div>
-                </div>
-
-                <div className="change-ledger">
-                  <header><div><span>지난 접속 이후</span><strong>3건의 변경</strong></div><time>06:30 → 08:42</time></header>
-                  {changes.map((change) => (
-                    <a href="#projects" className="change-row" key={`${change.time}-${change.title}`}>
-                      <time>{change.time}</time>
-                      <span className={`change-kind ${change.tone}`}>{change.kind}</span>
-                      <span className="change-title"><strong>{change.title}</strong><small>{change.context}</small></span>
-                      <span className="change-evidence"><small>근거</small><strong>{change.evidence}</strong></span>
-                      <span className={`change-impact ${change.tone}`}>{change.impact}</span>
-                      <ArrowRight size={14} />
-                    </a>
-                  ))}
-                </div>
-
-                <div className="flowline" id="lifecycle">
-                  {flowStages.map((stage, index) => (
-                    <a href="#projects" className="flow-stage" key={stage.code}>
-                      <div className="flow-name"><strong>{stage.code}</strong><span>{stage.label}</span></div>
-                      <div className="flow-value"><strong>{stage.value}</strong><span>{stage.unit}</span></div>
-                      <small>{stage.meta}</small>
-                      {index === 0 && <i className="flow-current" />}
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              <aside className="decision-rail" id="attention">
-                <header>
-                  <div><span>판단 대기</span><strong>2건</strong></div>
-                  <small>담당자 확인이 필요한 업무</small>
-                </header>
-                <a href="#projects" className="decision-item decision-warning">
-                  <div className="decision-code"><strong>성능 변화 · 우선</strong><time>11:30까지</time></div>
-                  <h3>AssemblyNet 기준 이탈</h3>
-                  <p>기준 대비 −2.3% · 전주 의장 · 품질AI팀</p>
+              <Link href="/work/tasks">전체 작업 보기 <ArrowRight size={14} /></Link>
+            </div>
+            <div className="attention-panel">
+              <div className="decision-list">
+                <Link href="/work/tasks?task=TASK-260912-017" className="decision-item decision-warning">
+                  <div className="decision-code"><strong>모델 성능 이상 · 우선</strong><time>13:12까지</time></div>
+                  <h3>Weld Detector 원인 확인</h3>
+                  <p>검출률 88.6% · 울산 차체 2라인 · 제조AI기술개발팀</p>
                   <span className="decision-link">원인 및 조치 검토 <ArrowRight size={14} /></span>
-                </a>
-                <a href="#projects" className="decision-item">
+                </Link>
+                <a href="#execute" className="decision-item">
                   <div className="decision-code"><strong>배포 승인</strong><time>16:00까지</time></div>
                   <h3>SurfaceNet 배포 승인</h3>
                   <p>검증 7/7 통과 · 아산 도장 · MLOps</p>
                   <span className="decision-link">비교 결과 검토 <ArrowRight size={14} /></span>
                 </a>
-                <a href="#projects" className="decision-footer">전체 승인함 열기 <ArrowRight size={14} /></a>
-              </aside>
+              </div>
             </div>
           </section>
 
-          <section className="plant-section" id="assets">
-            <div className="section-titlebar">
-              <div><span>거점 운영</span><h2>거점별 운영 매트릭스</h2></div>
-              <div className="section-tools"><span>4 OF 12 SITES</span><button type="button"><SlidersHorizontal size={14} /> 필터</button><a href="#assets">전체 거점 <ArrowRight size={14} /></a></div>
+          <section className="operations-ledger" aria-label="최근 운영 변경 및 생애주기">
+            <div className="change-ledger" id="history">
+              <header><div><span>최근 변경</span><strong>지난 접속 이후 3건</strong></div><time>06:30 → 08:42</time></header>
+              {changes.map((change) => (
+                <a href="#flow" className="change-row" key={`${change.time}-${change.title}`}>
+                  <time>{change.time}</time>
+                  <span className={`change-kind ${change.tone}`}>{change.kind}</span>
+                  <span className="change-title"><strong>{change.title}</strong><small>{change.context}</small></span>
+                  <span className="change-evidence"><small>근거</small><strong>{change.evidence}</strong></span>
+                  <span className={`change-impact ${change.tone}`}>{change.impact}</span>
+                  <ArrowRight size={14} />
+                </a>
+              ))}
             </div>
-            <div className="plant-matrix-wrap">
+
+            <div className="flow-summary" id="flow">
+              <header className="flow-summary-heading"><div><span>생애주기 현황</span><strong>8단계</strong></div><small>실시간 집계</small></header>
+              <div className="flowline">
+                {flowStages.map((stage, index) => (
+                  <a href="#execute" className="flow-stage" key={stage.code}>
+                    <div className="flow-name"><strong>{stage.code}</strong><span>{stage.label}</span></div>
+                    <div className="flow-value"><strong>{stage.value}</strong><span>{stage.unit}</span></div>
+                    <small>{stage.meta}</small>
+                    {index === 0 && <i className="flow-current" />}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="dashboard-section plant-section" id="sites">
+            <div className="section-titlebar">
+              <div><span>02 / 거점 운영</span><h2>거점별 운영 매트릭스</h2><p>연결된 12개 생산 거점의 데이터와 모델 상태</p></div>
+              <div className="section-tools"><span>4 / 12 거점</span><button type="button"><SlidersHorizontal size={14} /> 필터</button><a href="#assets">전체 거점 <ArrowRight size={14} /></a></div>
+            </div>
+            <div className="plant-matrix-wrap" id="assets">
               <table className="plant-matrix">
                 <thead><tr><th>생산 거점</th><th>DATA</th><th>TRAIN</th><th>DEPLOY</th><th>HEALTH</th><th>24H SIGNAL</th><th>UPDATED</th><th aria-label="상세" /></tr></thead>
                 <tbody>
@@ -253,14 +273,14 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="run-board pipeline-section" id="projects">
-              <div className="section-titlebar compact-titlebar">
-                <div><span>파이프라인 실행</span><h2>실행 중인 파이프라인</h2></div>
-                <a href="#lifecycle">전체 파이프라인 <ArrowRight size={14} /></a>
+          <section className="dashboard-section run-board pipeline-section" id="execute">
+              <div className="section-titlebar">
+                <div><span>03 / 파이프라인 현황</span><h2>실행 중인 파이프라인</h2><p>현재 교대에 동작 중인 학습 및 평가 작업</p></div>
+                <a href="#flow">전체 파이프라인 <ArrowRight size={14} /></a>
               </div>
               <div className="run-list">
                 {runs.map((run) => (
-                  <a href="#lifecycle" className="run-row" key={run.id}>
+                  <a href="#flow" className="run-row" key={run.id}>
                     <span className="run-id">{run.id}</span>
                     <span className="run-name"><strong>{run.name}</strong><small>{run.plant} · {run.model}</small></span>
                     <span className="run-progress"><i style={{ width: `${run.progress}%` }} /><em>{run.progress}%</em></span>
@@ -269,6 +289,45 @@ export default function Home() {
                   </a>
                 ))}
               </div>
+          </section>
+
+          <section className="dashboard-section evidence-section" id="evidence" aria-labelledby="evidence-title">
+            <div className="section-titlebar">
+              <div><span>04 / 성과 근거</span><h2 id="evidence-title">Zero-Loss 성과 원장</h2><p>운영 데이터로 검증된 품질·비가동 개선 효과</p></div>
+              <div className="section-tools"><span>검증 완료 3건</span><a href="#contribution">전체 기여 근거 <ArrowRight size={14} /></a></div>
+            </div>
+            <div className="evidence-table-wrap">
+              <table className="evidence-table">
+                <thead><tr><th>적용 모델</th><th>거점·라인</th><th>기존 기준</th><th>현재</th><th>연간 기여</th><th>검증 근거</th><th aria-label="상세" /></tr></thead>
+                <tbody>
+                  {evidenceRows.map((row) => (
+                    <tr key={row.model}>
+                      <td><strong>{row.model}</strong></td><td>{row.site}</td><td>{row.baseline}</td><td>{row.current}</td><td><strong>{row.impact}</strong></td><td>{row.evidence}</td><td><ArrowUpRight size={15} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="dashboard-section contribution-section" id="contribution" aria-labelledby="contribution-title">
+            <div className="section-titlebar">
+              <div><span>05 / 재무 기여</span><h2 id="contribution-title">재무 기여</h2><p>PRIZM이 만든 2026년 누적 가치 · 검증 완료 기준</p></div>
+              <div className="contribution-context"><span>시연용 데이터</span><button type="button">산정 기준 보기 <ArrowRight size={13} /></button></div>
+            </div>
+            <div className="contribution-ledger">
+              <div className="contribution-grid">
+                {contributionKpis.map((kpi) => (
+                  <article className={kpi.tone === 'total' ? 'contribution-kpi is-total' : 'contribution-kpi'} key={kpi.code}>
+                    <div><span>{kpi.code}</span>{kpi.meta && <em>{kpi.meta}</em>}</div>
+                    <strong>{kpi.value}</strong>
+                    <h3>{kpi.label}</h3>
+                    <p>{kpi.detail}</p>
+                  </article>
+                ))}
+              </div>
+              <div className="contribution-mix" aria-label="기여 금액 구성"><i className="infra" /><i className="labor" /><i className="loss" /></div>
+            </div>
           </section>
 
           <footer className="dashboard-footer"><span>PRIZM v2.8.4 · PRODUCTION</span><span>HYUNDAI MOTOR COMPANY · 제조솔루션본부</span></footer>

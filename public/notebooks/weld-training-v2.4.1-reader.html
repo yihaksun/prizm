@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weld Training v2.4.1 · PRIZM Notebook Reader</title>
+  <style>
+    :root { color-scheme: light; --navy: #002c5f; --cyan: #00aad2; --line: #d9e0e5; --muted: #778692; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body { color: #172b3b; background: #f4f6f7; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif; }
+    .reader { height: 100%; display: grid; grid-template-columns: 250px minmax(0, 1fr); transition: grid-template-columns .2s ease; }
+    .reader.is-collapsed { grid-template-columns: 58px minmax(0, 1fr); }
+    aside { min-width: 0; position: relative; z-index: 2; display: flex; flex-direction: column; overflow: hidden; color: #dce9f3; background: #06162f; border-right: 1px solid #18344f; }
+    .brand { height: 68px; padding: 0 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,.1); }
+    .brand-lockup { min-width: 0; display: grid; align-content: center; gap: 2px; }
+    .brand-logo { width: 148px; height: auto; margin-left: -19px; display: block; }
+    .brand small { color: #7f9bb3; font-size: 8px; letter-spacing: .15em; white-space: nowrap; }
+    .collapse { width: 30px; height: 30px; margin-left: auto; flex: none; display: grid; place-items: center; color: #b8ccdc; background: transparent; border: 1px solid rgba(255,255,255,.16); cursor: pointer; }
+    .collapse svg { transition: transform .2s ease; }
+    .reader.is-collapsed .collapse svg { transform: rotate(180deg); }
+    .nav-head { padding: 24px 20px 12px; }
+    .nav-head span { color: #5f829f; font-family: monospace; font-size: 9px; font-weight: 700; letter-spacing: .13em; }
+    .nav-head strong { margin-top: 8px; display: block; color: #f2f7fb; font-size: 14px; line-height: 1.45; white-space: nowrap; }
+    nav { padding: 6px 12px; display: grid; gap: 4px; }
+    nav a { min-height: 46px; padding: 0 10px; display: grid; grid-template-columns: 24px 1fr; align-items: center; gap: 8px; position: relative; color: #91aabd; text-decoration: none; font-size: 12px; white-space: nowrap; }
+    nav a::before { content: ''; width: 5px; height: 5px; border: 1px solid #60809b; border-radius: 50%; }
+    nav a:hover { color: white; background: rgba(255,255,255,.05); }
+    nav a.is-active { color: white; background: rgba(0,170,210,.12); }
+    nav a.is-active::before { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(0,170,210,.12); }
+    nav a.is-active::after { content: ''; width: 2px; position: absolute; top: 9px; bottom: 9px; left: 0; background: var(--cyan); }
+    .reader-meta { margin: auto 20px 18px; padding-top: 16px; color: #67859e; border-top: 1px solid rgba(255,255,255,.1); font-family: monospace; font-size: 9px; line-height: 1.7; white-space: nowrap; }
+    .reader.is-collapsed .brand { padding: 0 13px; }
+    .reader.is-collapsed .brand-lockup, .reader.is-collapsed .nav-head, .reader.is-collapsed nav span, .reader.is-collapsed .reader-meta { display: none; }
+    .reader.is-collapsed .collapse { margin: 0; }
+    .reader.is-collapsed nav { padding: 12px 8px; }
+    .reader.is-collapsed nav a { padding: 0; grid-template-columns: 1fr; justify-items: center; }
+    .reader.is-collapsed nav a::after { left: -8px; }
+    main { min-width: 0; height: 100%; display: grid; grid-template-rows: 68px minmax(0, 1fr); }
+    header { padding: 0 26px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: white; border-bottom: 1px solid var(--line); }
+    header div { min-width: 0; }
+    header strong, header span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    header strong { color: #1d3345; font-size: 14px; font-weight: 650; }
+    header span { margin-top: 4px; color: var(--muted); font-family: monospace; font-size: 9px; }
+    .status { padding: 6px 9px; flex: none; color: #26705e; background: #eef7f4; border: 1px solid #c9e2da; font-family: monospace; font-size: 9px; font-weight: 700; letter-spacing: .06em; }
+    iframe { width: 100%; height: 100%; display: block; background: white; border: 0; }
+    @media (max-width: 760px) {
+      .reader { grid-template-columns: 0 minmax(0, 1fr); }
+      aside { display: none; }
+      header { padding: 0 14px; }
+      .status { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="reader" id="reader">
+    <aside>
+      <div class="brand">
+        <div class="brand-lockup"><img class="brand-logo" src="../prizm-logo-dark-rainbow.svg" alt="PRIZM" /><small>NOTEBOOK READER</small></div>
+        <button class="collapse" id="collapse" type="button" aria-label="목차 접기">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M8.5 3.5 5 7l3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="nav-head"><span>CONTENTS</span><strong>용접 비드 결함<br />검출 모델 학습</strong></div>
+      <nav aria-label="Notebook 목차">
+        <a class="is-active" href="#overview" data-section="overview" title="개요"><span>개요</span></a>
+        <a href="#data" data-section="data" title="파라미터와 자산 연결"><span>파라미터와 자산 연결</span></a>
+        <a href="#training" data-section="training" title="모델 학습"><span>모델 학습</span></a>
+        <a href="#evaluation" data-section="evaluation" title="평가 및 모델 등록"><span>평가 및 모델 등록</span></a>
+      </nav>
+      <div class="reader-meta">PRJ000212-C-0001<br />VERSION 2.4.1<br />READ ONLY</div>
+    </aside>
+    <main>
+      <header><div><strong>차체 용접 비드 결함 검출 모델 학습</strong><span>weld-training-v2.4.1.ipynb · Python 3 (ipykernel)</span></div><b class="status">REPRODUCED</b></header>
+      <iframe id="notebook" name="notebook-frame" src="./weld-training-v2.4.1.html" title="차체 용접 비드 결함 검출 모델 학습 Notebook"></iframe>
+    </main>
+  </div>
+  <script>
+    const reader = document.getElementById('reader');
+    const frame = document.getElementById('notebook');
+    const links = Array.from(document.querySelectorAll('nav a'));
+    document.getElementById('collapse').addEventListener('click', () => reader.classList.toggle('is-collapsed'));
+    links.forEach((link) => link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const target = frame.contentDocument.getElementById(link.dataset.section);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    frame.addEventListener('load', () => {
+      const doc = frame.contentDocument;
+      const win = frame.contentWindow;
+      const sections = links.map((link) => ({ link, node: doc.getElementById(link.dataset.section) })).filter((item) => item.node);
+      const sync = () => {
+        let active = sections[0];
+        for (const section of sections) if (section.node.getBoundingClientRect().top <= 150) active = section;
+        links.forEach((link) => link.classList.toggle('is-active', link === active.link));
+      };
+      win.addEventListener('scroll', sync, { passive: true });
+      sync();
+    });
+  </script>
+</body>
+</html>
