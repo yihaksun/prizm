@@ -111,6 +111,7 @@ type CodeAsset = {
   preview: 'curve' | 'matrix' | 'series' | 'scatter' | 'bars' | 'heatmap';
   previewMetric: string;
   previewLabel: string;
+  previewImage?: string;
 };
 
 type WorkspaceScreen = 'catalog' | 'detail' | 'pipeline' | 'run';
@@ -177,7 +178,7 @@ const initialAssets: CodeAsset[] = [
     description: '차체 용접 이미지에서 비드 형상과 결함 유형을 학습하는 표준 Notebook입니다.',
     role: '학습', plant: '울산', process: '차체 · 용접', project: '용접 품질 고도화', dataType: 'Image', framework: 'PyTorch',
     owner: '제조AI기술개발팀', version: 'v2.4.1', updated: '2일 전', verified: '재현 확인', reuse: 3, executable: true, favorite: true,
-    preview: 'curve', previewMetric: '0.967', previewLabel: 'mAP50',
+    preview: 'curve', previewMetric: '0.967', previewLabel: 'mAP50', previewImage: '/weld-inspection-defect.png',
   },
   {
     id: 'CODE-ASN-PAINT-014', title: '도장 표면 결함 모델 평가',
@@ -329,7 +330,7 @@ function TrustStatus({ status }: { status: CodeAsset['verified'] }) {
   return <span className={status === '운영 승인' || status === '재현 확인' ? 'detail-trust is-verified' : status === '사전 점검' ? 'detail-trust is-check' : 'detail-trust'}><i />{status}</span>;
 }
 
-function NotebookThumbnail({ asset }: { asset: Pick<CodeAsset, 'preview' | 'previewLabel' | 'previewMetric' | 'role'> }) {
+function NotebookThumbnail({ asset }: { asset: Pick<CodeAsset, 'preview' | 'previewLabel' | 'previewMetric' | 'role' | 'previewImage'> }) {
   const seriesPoints = asset.preview === 'curve'
     ? '0,76 18,68 36,59 54,48 72,39 90,29 108,23 126,17 144,14 162,11 180,9'
     : '0,52 15,48 30,55 45,36 60,41 75,24 90,31 105,18 120,27 135,14 150,20 165,10 180,16';
@@ -343,14 +344,14 @@ function NotebookThumbnail({ asset }: { asset: Pick<CodeAsset, 'preview' | 'prev
       <figcaption className="sr-only">{asset.previewLabel} {asset.previewMetric} Notebook 자동 미리보기</figcaption>
       <header><span>NOTEBOOK OUTPUT</span><b>AUTO</b></header>
       <div className="notebook-thumbnail-body">
-        <div className="thumbnail-code-lines" aria-hidden="true"><i /><i /><i /><i /></div>
+        {asset.previewImage ? <div className="thumbnail-result-image"><Image src={asset.previewImage} alt="용접 비드 결함 검출 결과" fill sizes="(max-width: 1320px) 50vw, 33vw" /><span aria-hidden="true" /></div> : <><div className="thumbnail-code-lines" aria-hidden="true"><i /><i /><i /><i /></div>
         <div className="thumbnail-visual">
           {(asset.preview === 'curve' || asset.preview === 'series') && <svg viewBox="0 0 180 82" preserveAspectRatio="none"><path d="M0 72H180 M0 44H180 M0 16H180" /><polyline points={seriesPoints} /><circle cx="180" cy={asset.preview === 'curve' ? '9' : '16'} r="3" /></svg>}
           {asset.preview === 'matrix' && <div className="thumbnail-matrix">{matrix.map((value, index) => <i key={index} style={{ '--cell-opacity': value } as CSSProperties} />)}</div>}
           {asset.preview === 'scatter' && <svg viewBox="0 0 100 82" preserveAspectRatio="none"><path d="M0 70L100 18" />{scatter.map(([cx, cy], index) => <circle key={index} cx={cx} cy={cy} r={index % 3 === 0 ? 3 : 2} />)}</svg>}
           {asset.preview === 'bars' && <div className="thumbnail-bars">{bars.map((height, index) => <i key={index} style={{ '--bar-height': `${height}%` } as CSSProperties} />)}</div>}
           {asset.preview === 'heatmap' && <div className="thumbnail-heatmap">{heatmap.map((value, index) => <i key={index} style={{ '--cell-opacity': value } as CSSProperties} />)}</div>}
-        </div>
+        </div></>}
       </div>
       <footer><span>{asset.previewLabel}</span><strong>{asset.previewMetric}</strong><em>{asset.role}</em></footer>
     </figure>
