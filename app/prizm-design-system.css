@@ -40,7 +40,7 @@
   margin: 0;
   border-radius: 0.35rem;
   background: transparent;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 /* Asset catalogs: one open work surface with content cards only. */
@@ -75,12 +75,12 @@
 .model-catalog-card.is-demo-ready { box-shadow: var(--panel-shadow); }
 .code-asset-list.is-grid .code-asset-row.is-demo-ready:hover { box-shadow: var(--panel-shadow-hover); }
 .code-asset-project { color: #506b7d; font-size: 0.76rem; }
-.code-asset-copy h2 { font-size: 1.02rem; line-height: 1.4; }
+.code-asset-copy h2 { font-size: 1.0625rem; line-height: 1.4; }
 .code-asset-copy p { color: var(--muted); font-size: 0.84rem; line-height: 1.55; }
 .code-asset-context,
 .code-asset-technical,
 .code-asset-owner,
-.code-asset-trust { font-size: 0.72rem; }
+.code-asset-trust { font-size: 0.75rem; }
 
 /* Real manufacturing evidence becomes the cover. */
 .data-catalog-thumbnail,
@@ -240,7 +240,7 @@
 .model-title-mark { color: var(--hyundai-blue); background: transparent; }
 .detail-title-mark span {
   color: #667b8a;
-  font-size: 0.48rem;
+  font-size: 0.75rem;
   letter-spacing: .055em;
 }
 .code-detail-title h1 { font-size: 1.85rem; font-weight: 620; }
@@ -283,7 +283,7 @@
 .data-sample-browser > header span,
 .model-purpose-panel > header span:first-child,
 .model-evaluation-panel > header span,
-.deployment-list > header span { color: #607789; font-size: 0.64rem; }
+.deployment-list > header span { color: #607789; font-size: 0.75rem; }
 .data-change-summary > div span { color: #557387; }
 .model-detail-score {
   overflow: hidden;
@@ -292,7 +292,7 @@
   box-shadow: var(--panel-shadow);
 }
 .model-purpose-grid span,
-.model-purpose-grid small { font-size: 0.7rem; }
+.model-purpose-grid small { font-size: 0.75rem; }
 .model-purpose-grid strong { font-size: 0.8rem; line-height: 1.45; }
 .model-business-strip {
   border-color: #d3e1dc;
@@ -313,7 +313,7 @@
 .pipeline-workspace-heading,
 .evaluation-workspace-heading { min-height: 8rem; }
 .pipeline-workspace-heading h1,
-.evaluation-workspace-heading h1 { font-size: 2.2rem; }
+.evaluation-workspace-heading h1 { font-size: 2rem; }
 .pipeline-workspace-heading p,
 .evaluation-workspace-heading p { font-size: 0.95rem; }
 .pipeline-workspace-tabs,
@@ -341,14 +341,14 @@
   padding-inline: 1.35rem;
   border-bottom-color: var(--line);
 }
-.evaluation-queue > header > div > span { color: #607789; font-size: .64rem; }
+.evaluation-queue > header > div > span { color: #607789; font-size: .75rem; }
 .evaluation-queue > header h2 { font-size: 1.05rem; }
-.evaluation-queue > header nav button { height: 2.3rem; font-size: .74rem; border-radius: .32rem; }
+.evaluation-queue > header nav button { height: 2.3rem; font-size: .75rem; border-radius: .32rem; }
 .evaluation-summary {
   border-color: var(--line);
   border-radius: .45rem;
 }
-.evaluation-summary small { font-size: .66rem; }
+.evaluation-summary small { font-size: .75rem; }
 
 /* Resource screens: readable catalog, neutral cards, status through text. */
 .resource-page-heading { min-height: 8rem; }
@@ -360,14 +360,14 @@
   box-shadow: var(--panel-shadow);
 }
 .resource-summary-strip > div + div { border-left-color: var(--line); }
-.resource-summary-strip span { color: var(--muted); font-size: .72rem; }
+.resource-summary-strip span { color: var(--muted); font-size: .75rem; }
 .resource-summary-strip strong {
   color: var(--ink);
   font-family: inherit;
   font-size: 1.65rem;
   font-weight: 600;
 }
-.resource-summary-strip small { color: #557387; font-size: .68rem; }
+.resource-summary-strip small { color: #557387; font-size: .75rem; }
 .resource-toolbar {
   border-color: var(--line);
   border-radius: .5rem;
@@ -382,7 +382,7 @@
   border: 0;
 }
 .resource-results > header strong { font-size: .92rem; }
-.resource-results > header div span { font-size: .7rem; }
+.resource-results > header div span { font-size: .75rem; }
 .resource-profile-grid,
 .runtime-image-grid {
   gap: 1.25rem;
@@ -414,30 +414,30 @@
   border-color: #cbd7dd;
 }
 .resource-profile-card header div > span,
-.runtime-image-card header div > span { font-size: .58rem; }
+.runtime-image-card header div > span { font-size: .75rem; }
 .resource-profile-card h2,
 .runtime-image-card h2 { font-size: 1.04rem; }
-.resource-recommended { font-size: .62rem; }
+.resource-recommended { font-size: .75rem; }
 .resource-spec-grid small,
 .resource-capacity span,
 .runtime-image-card dt,
-.runtime-status { font-size: .66rem; }
+.runtime-status { font-size: .75rem; }
 .resource-spec-grid strong,
 .resource-capacity strong,
 .runtime-image-card dd { font-size: .75rem; }
 .resource-profile-card > p,
-.runtime-image-card header p { font-size: .74rem; }
+.runtime-image-card header p { font-size: .8rem; }
 .runtime-image-list {
   border-color: var(--line);
   border-radius: .55rem;
   box-shadow: var(--panel-shadow);
 }
-.runtime-list-identity strong { font-size: .74rem; }
+.runtime-list-identity strong { font-size: .8rem; }
 .runtime-list-identity small,
 .runtime-list-value strong,
 .runtime-list-packages strong,
-.runtime-list-updated strong { font-size: .65rem; }
-.runtime-row-action { font-size: .68rem; }
+.runtime-list-updated strong { font-size: .75rem; }
+.runtime-row-action { font-size: .75rem; }
 .runtime-detail-dialog {
   border-radius: .75rem !important;
   box-shadow: 0 1.5rem 4.5rem rgba(4,24,43,.2) !important;
@@ -447,18 +447,18 @@
   background: white;
   border-bottom: 1px solid var(--line);
 }
-.runtime-detail-header > span { color: #607789; font-size: .64rem; }
+.runtime-detail-header > span { color: #607789; font-size: .75rem; }
 .runtime-detail-header [data-slot="dialog-title"] { color: var(--ink); }
 .runtime-detail-header [data-slot="dialog-description"] { color: var(--muted); font-size: .82rem; }
 .runtime-detail-dialog > button { color: #6f7f8b !important; }
 .runtime-detail-body { padding: 1.35rem 1.55rem 1.55rem; background: #f7f6f4; }
 .runtime-package-panel h3 { font-size: .95rem; }
 .runtime-package-panel th,
-.runtime-package-panel td { font-size: .66rem; }
+.runtime-package-panel td { font-size: .75rem; }
 
 /* Monitoring and closed-loop screens keep the evidence prominent. */
 .vision-demo-shell { background: var(--light-sand); }
-.vision-demo-page-header h1 { font-size: 2.2rem; }
+.vision-demo-page-header h1 { font-size: 2rem; }
 .vision-demo-page-header p { font-size: .95rem; }
 .global-monitor-hero,
 .factory-network,
@@ -483,7 +483,7 @@
 }
 .global-monitor-kpis article span,
 .factory-overview span,
-.health-kpis article span { font-size: .72rem; }
+.health-kpis article span { font-size: .75rem; }
 .global-monitor-kpis article strong,
 .factory-overview strong,
 .health-kpis article strong { font-weight: 600; }
@@ -567,12 +567,12 @@
 .projects-heading { min-height: 8.4rem; }
 .projects-heading > div > span {
   color: #607789;
-  font-size: .67rem;
+  font-size: .75rem;
   letter-spacing: .11em;
 }
 .projects-heading h1 {
   margin-top: .62rem;
-  font-size: 2.25rem;
+  font-size: 2rem;
   font-weight: 620;
 }
 .projects-heading p { margin-top: .8rem; font-size: .92rem; }
@@ -585,7 +585,7 @@
 }
 .projects-summary {
   overflow: hidden;
-  background: rgba(255,255,255,.88);
+  background: white;
   border-color: var(--line);
   border-radius: .6rem;
   box-shadow: var(--panel-shadow);
@@ -595,21 +595,21 @@
   padding: 1.15rem 1.3rem;
   border-right-color: var(--line);
 }
-.projects-summary span { color: #607789; font-size: .73rem; }
+.projects-summary span { color: #607789; font-size: .8125rem; }
 .projects-summary strong { color: var(--ink); font-size: 1.7rem; font-weight: 610; }
-.projects-summary small { color: #7d8d98; font-size: .68rem; }
+.projects-summary small { color: #7d8d98; font-size: .75rem; }
 .projects-toolbar {
   min-height: 4.5rem;
   margin-top: 1.15rem;
   padding: .65rem .8rem .65rem 1.05rem;
-  background: rgba(255,255,255,.9);
+  background: white;
   border-color: var(--line);
   border-radius: .55rem;
   box-shadow: var(--panel-shadow);
 }
 .projects-toolbar input { font-size: .83rem; }
 .projects-toolbar > div button,
-.projects-filter { min-height: 2.45rem; border-radius: .35rem; font-size: .72rem; }
+.projects-filter { min-height: 2.45rem; border-radius: .35rem; font-size: .75rem; }
 .projects-list {
   margin-top: .9rem;
   overflow: hidden;
@@ -627,7 +627,7 @@
   padding-inline: 1.25rem;
   color: #657b89;
   background: #f3f3f1;
-  font-size: .69rem;
+  font-size: .75rem;
 }
 .projects-list > .project-row {
   min-height: 6rem;
@@ -643,31 +643,31 @@
   border: 1px solid #cbd7dd;
   border-radius: .42rem;
 }
-.project-name-cell small { font-size: .61rem; }
-.project-name-cell strong { margin-top: .3rem; font-size: .82rem; }
+.project-name-cell small { font-size: .75rem; }
+.project-name-cell strong { margin-top: .3rem; font-size: .875rem; }
 .project-site-cell strong,
-.project-owner-cell strong { font-size: .73rem; }
+.project-owner-cell strong { font-size: .8125rem; }
 .project-site-cell small,
 .project-owner-cell small,
-.project-stage { font-size: .65rem; }
+.project-stage { font-size: .75rem; }
 .project-status {
   padding: .22rem .45rem;
   border: 1px solid rgba(85,113,128,.13);
   border-radius: .28rem;
-  font-size: .64rem;
+  font-size: .75rem;
 }
 .project-assets-cell em {
   padding: .3rem .42rem;
   border: 1px solid #e0e5e7;
   border-radius: .28rem;
-  font-size: .62rem;
+  font-size: .75rem;
 }
-.project-updated { font-size: .67rem; }
+.project-updated { font-size: .75rem; }
 .project-permission-button {
   height: 2.3rem;
   padding-inline: .7rem;
   border-radius: .35rem;
-  font-size: .68rem;
+  font-size: .75rem;
 }
 .project-permission-dialog { border-radius: .75rem !important; box-shadow: 0 1.5rem 4.5rem rgba(4,24,43,.2) !important; }
 .project-permission-header { padding: 1.55rem 1.7rem 1.3rem; background: white; }
@@ -677,7 +677,187 @@
 .project-role-card { border-radius: .5rem; overflow: hidden; }
 .project-role-icon { border-radius: .38rem; }
 .project-permission-footer { min-height: 4.8rem; padding: .9rem 1.4rem !important; background: white; }
-.project-permission-footer button { height: 2.5rem; border-radius: .35rem; font-size: .7rem; }
+.project-permission-footer button { height: 2.5rem; border-radius: .35rem; font-size: .75rem; }
+
+/* Handoff compliance: keep operational text readable and remove decorative stripes. */
+.code-page-heading h1,
+.resource-page-heading h1 { font-size: 2rem; }
+.code-page-kicker { font-size: .75rem; }
+
+.monitor-back,
+.factory-overview span,
+.factory-overview small,
+.factory-projects > header span,
+.project-rank,
+.factory-projects button strong,
+.factory-projects button small,
+.factory-projects button b,
+.factory-projects button em,
+.factory-alerts strong,
+.factory-alerts small,
+.factory-alerts article > b,
+.factory-alerts > button > b,
+.health-score span,
+.health-score small,
+.health-kpis small,
+.drift-panel header span,
+.impact-panel header span,
+.drift-panel header b,
+.drift-panel footer,
+.impact-panel dt,
+.closed-loop-card > div:nth-child(2) > span,
+.closed-loop-card p,
+.closed-loop-card > div:nth-child(2) > div span,
+.closed-loop-card > button,
+.monitor-incident-banner > div:nth-child(2) > span,
+.monitor-incident-banner p,
+.monitor-incident-banner dt,
+.monitor-incident-banner dd,
+.incident-process > header span,
+.incident-process > header p,
+.incident-process-flow article > span,
+.incident-process-flow article strong,
+.incident-process-flow article small,
+.incident-process-flow article em,
+.incident-loop-card > a {
+  font-size: .75rem;
+}
+
+.task-inbox > header span,
+.task-inbox-tabs button,
+.task-type,
+.task-inbox-list button > strong,
+.task-inbox-list button > small,
+.task-inbox-list footer,
+.task-detail-eyebrow,
+.task-detail-header p,
+.task-detail-header dt,
+.task-detail-header dd,
+.task-context-strip > span,
+.task-context-strip > strong,
+.task-context-strip > a,
+.task-evidence-card header span,
+.task-signal-card header span,
+.task-process header span,
+.task-review-panel header > div > span,
+.task-evidence-card header > b,
+.task-evidence-visual > span,
+.task-evidence-card > footer,
+.task-signal-card dt,
+.task-signal-card dd strong,
+.task-signal-card dd small,
+.task-process > header p {
+  font-size: .75rem;
+}
+
+.preflight-panel header small,
+.preflight-panel header b,
+.preflight-checks span,
+.execution-estimate span,
+.schedule-dialog-header > span,
+.schedule-mode-switch strong,
+.schedule-mode-switch small,
+.schedule-form-grid label > span:first-child,
+.weekday-picker > span,
+.schedule-form-grid input,
+.weekday-picker button,
+.schedule-policy strong,
+.schedule-policy span,
+.schedule-summary span,
+.schedule-summary small,
+.run-result-strip small,
+.run-result-strip button,
+.code-notice,
+.code-notice .code-notice-link {
+  font-size: .75rem;
+}
+
+.demo-run-card,
+.promotion-body > div.is-new,
+.model-lineage article,
+.lineage-node,
+.schedule-summary,
+.fork-source-card,
+.code-notice,
+.runtime-stack {
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+.resource-profile-card:hover,
+.runtime-image-card:hover,
+.runtime-image-row:hover,
+.factory-projects > button:hover,
+.factory-projects > button.is-selected {
+  box-shadow: none;
+}
+.schedule-mode-switch button.is-active,
+.task-inbox-list > button:hover,
+.task-inbox-list > button.is-selected { box-shadow: none; }
+.promotion-dialog [data-slot="dialog-footer"] {
+  margin: 0 !important;
+  padding: 1.25rem 1.5rem !important;
+  background: white !important;
+}
+
+/* Home 01–05: one readable ledger scale across every operational section. */
+.work-ledger-cell small,
+.active-model-cell strong,
+.page-index,
+.section-titlebar > div > span,
+.demo-disclosure,
+.operations-commandbar .quiet-action,
+.operations-commandbar .run-action,
+.contribution-ledger > header span,
+.contribution-context button,
+.contribution-kpi span,
+.contribution-kpi em,
+.attention-heading > a,
+.ledger-toolbar .quiet-action,
+.ledger-toolbar .run-action,
+.live-label,
+.context-controls button,
+.last-sync,
+.network-status-strip span,
+.network-status-strip small,
+.change-ledger > header strong,
+.change-ledger > header time,
+.change-row > time,
+.change-kind,
+.change-title small,
+.change-evidence small,
+.change-evidence strong,
+.change-impact,
+.flow-summary-heading strong,
+.flow-summary-heading small,
+.flow-name strong,
+.flow-name span,
+.flow-value span,
+.flow-stage > small,
+.decision-rail > header strong,
+.decision-rail > header small,
+.decision-link,
+.decision-footer,
+.evidence-table th,
+.evidence-table td,
+.evidence-table td:first-child strong,
+.section-tools > span,
+.section-tools button,
+.section-titlebar a,
+.section-titlebar .contribution-context button,
+.plant-code,
+.run-id,
+.run-eta,
+.run-progress em,
+.dashboard-footer {
+  font-size: .75rem;
+}
+.evidence-table td,
+.plant-matrix td { line-height: 1.45; }
+.contribution-grid {
+  grid-template-columns: minmax(20rem, 1.45fr) repeat(3, minmax(0, 1fr));
+}
+.contribution-kpi.is-total { padding-inline: 1.4rem; }
+.contribution-kpi.is-total strong { font-size: clamp(2.3rem, 3.2vw, 3.1rem); }
 
 @media (max-width: 1380px) {
   .projects-list > header,
@@ -708,4 +888,11 @@
   .vision-demo-page-header h1 { font-size: 1.8rem; }
   .code-asset-list.is-grid { --asset-media-height: 9rem; }
   .projects-page { padding-inline: 1rem; }
+  .contribution-grid { grid-template-columns: 1fr; }
+  .contribution-kpi { border-right: 0; border-bottom: 1px solid var(--line); }
+  .contribution-kpi:last-child { border-bottom: 0; }
+}
+
+@media (min-width: 768px) and (max-width: 900px) {
+  .contribution-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
