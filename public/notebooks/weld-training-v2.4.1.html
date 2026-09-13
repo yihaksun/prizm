@@ -40,6 +40,22 @@
     .gate { margin-top: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; color: #235744; background: #edf7f3; border: 1px solid #bcdccb; }
     .gate span { font-size: 12px; }
     .gate b { padding: 3px 8px; color: #176444; border: 1px solid #70aa90; font-family: monospace; font-size: 12px; }
+    .prediction-summary { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; color: #59636d; font-size: 12px; }
+    .prediction-summary strong { color: #176444; font-weight: 650; }
+    .prediction-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .prediction-card { overflow: hidden; background: #fff; border: 1px solid #d9dde1; border-radius: 6px; }
+    .prediction-image { height: 142px; position: relative; overflow: hidden; background: #10202d; }
+    .prediction-image img { width: 100%; height: 100%; display: block; object-fit: cover; filter: brightness(.82) contrast(1.08); }
+    .prediction-card:nth-child(2) img { object-position: 44% center; transform: scale(1.08); }
+    .prediction-card:nth-child(3) img { object-position: 62% center; transform: scale(1.16); }
+    .prediction-box { position: absolute; border: 1.5px solid #55d6e8; box-shadow: 0 0 0 1px rgba(0,24,39,.38); }
+    .prediction-box b { position: absolute; top: -20px; left: -1px; padding: 2px 5px; color: #05212d; background: #55d6e8; font-family: monospace; font-size: 10px; white-space: nowrap; }
+    .prediction-card:nth-child(1) .prediction-box { width: 34%; height: 31%; top: 39%; left: 46%; }
+    .prediction-card:nth-child(2) .prediction-box { width: 28%; height: 26%; top: 33%; left: 34%; }
+    .prediction-card:nth-child(3) .prediction-box { width: 38%; height: 34%; top: 42%; left: 47%; }
+    .prediction-card footer { padding: 8px 9px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .prediction-card footer span { color: #5c6872; font-family: monospace; font-size: 10px; }
+    .prediction-card footer strong { color: #1f4f43; font-size: 11px; }
     @media (max-width: 700px) {
       .jp-Notebook { padding: 24px 14px 60px; }
       .jp-MarkdownOutput { padding-left: 0; }
@@ -48,6 +64,7 @@
       .callout { margin-left: 42px; }
       .cell-tag { margin-left: 42px; }
       h1 { font-size: 23px; }
+      .prediction-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -182,10 +199,39 @@ GPU: NVIDIA A100 20GB · epochs 80 · batch 16 · imgsz 1024
       </div>
     </section>
 
-    <section class="jp-Cell jp-MarkdownCell"><div class="jp-MarkdownOutput jp-RenderedHTMLCommon"><h2 id="evaluation">3. 평가 및 모델 등록</h2><p>학습 산출물을 표준 Gate로 평가하고, 계보 정보와 함께 모델 자산에 새 버전을 등록합니다.</p></div></section>
+    <section class="jp-Cell jp-MarkdownCell"><div class="jp-MarkdownOutput jp-RenderedHTMLCommon"><h2 id="test-output">3. 테스트 이미지 추론 결과</h2><p>학습에 사용하지 않은 테스트 셋을 대상으로 신규 모델의 실제 검출 결과를 확인합니다.</p></div></section>
     <section class="jp-Cell jp-CodeCell">
       <div class="jp-InputArea">
         <div class="jp-InputPrompt">In&nbsp;[5]:</div>
+        <div class="jp-CodeMirrorEditor"><pre><span class="cm"># 테스트 셋 추론 결과를 Notebook 출력과 MLflow artifact에 함께 남깁니다.</span>
+predictions = model.<span class="fn">predict</span>(
+    source=dataset.test,
+    imgsz=image_size,
+    conf=<span class="num">0.25</span>,
+    save=<span class="kw">True</span>,
+)
+prizm.notebook.<span class="fn">display_predictions</span>(predictions, limit=<span class="num">3</span>)
+mlflow.<span class="fn">log_artifacts</span>(result.save_dir / <span class="str">"test_predictions"</span>)</pre></div>
+      </div>
+      <div class="jp-OutputArea">
+        <div class="jp-OutputArea-child">
+          <div class="jp-OutputPrompt">Out[5]:</div>
+          <div class="jp-OutputArea-output">
+            <div class="prediction-summary"><span>Test split · 4,318 images</span><strong>미세 크랙 Recall 96.1% · 47건 개선</strong></div>
+            <div class="prediction-grid">
+              <article class="prediction-card"><div class="prediction-image"><img src="/weld-inspection-defect.png" alt="테스트 이미지의 미세 크랙 검출 결과" /><span class="prediction-box"><b>MICRO CRACK · 96.8%</b></span></div><footer><span>TEST_0042761</span><strong>검출 성공</strong></footer></article>
+              <article class="prediction-card"><div class="prediction-image"><img src="/weld-inspection-defect.png" alt="저조도 테스트 이미지의 미세 크랙 검출 결과" /><span class="prediction-box"><b>MICRO CRACK · 94.2%</b></span></div><footer><span>TEST_0043188</span><strong>저조도 검출</strong></footer></article>
+              <article class="prediction-card"><div class="prediction-image"><img src="/weld-inspection-defect.png" alt="확대 테스트 이미지의 미세 크랙 검출 결과" /><span class="prediction-box"><b>MICRO CRACK · 91.7%</b></span></div><footer><span>TEST_0043924</span><strong>미세 결함 검출</strong></footer></article>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="jp-Cell jp-MarkdownCell"><div class="jp-MarkdownOutput jp-RenderedHTMLCommon"><h2 id="evaluation">4. 평가 및 모델 등록</h2><p>학습 산출물을 표준 Gate로 평가하고, 계보 정보와 함께 모델 자산에 새 버전을 등록합니다.</p></div></section>
+    <section class="jp-Cell jp-CodeCell">
+      <div class="jp-InputArea">
+        <div class="jp-InputPrompt">In&nbsp;[6]:</div>
         <div class="jp-CodeMirrorEditor"><pre>metrics = prizm.model.<span class="fn">evaluate</span>(
     artifact=result.best,
     dataset=dataset,
@@ -196,7 +242,7 @@ metrics</pre></div>
       </div>
       <div class="jp-OutputArea">
         <div class="jp-OutputArea-child">
-          <div class="jp-OutputPrompt">Out[5]:</div>
+          <div class="jp-OutputPrompt">Out[6]:</div>
           <div class="jp-OutputArea-output jp-RenderedHTMLCommon">
             <table><thead><tr><th>metric</th><th>result</th><th>gate</th><th>status</th></tr></thead><tbody><tr><td>mAP50</td><td>0.967</td><td>≥ 0.940</td><td>PASS</td></tr><tr><td>Precision</td><td>0.953</td><td>≥ 0.930</td><td>PASS</td></tr><tr><td>Recall</td><td>0.948</td><td>≥ 0.920</td><td>PASS</td></tr><tr><td>False reject</td><td>1.8%</td><td>≤ 2.5%</td><td>PASS</td></tr></tbody></table>
           </div>
@@ -206,7 +252,7 @@ metrics</pre></div>
 
     <section class="jp-Cell jp-CodeCell">
       <div class="jp-InputArea">
-        <div class="jp-InputPrompt">In&nbsp;[6]:</div>
+        <div class="jp-InputPrompt">In&nbsp;[7]:</div>
         <div class="jp-CodeMirrorEditor"><pre><span class="cm"># MLflow 실행을 종료한 뒤 run_id만 PRIZM에 전달합니다.</span>
 mlflow_run_id = run.info.run_id
 mlflow.<span class="fn">end_run</span>()
@@ -220,7 +266,7 @@ registered_model</pre></div>
       </div>
       <div class="jp-OutputArea">
         <div class="jp-OutputArea-child">
-          <div class="jp-OutputPrompt">Out[6]:</div>
+          <div class="jp-OutputPrompt">Out[7]:</div>
           <div class="jp-OutputArea-output">
             <pre>ModelAsset(id='PRJ000212-M-0001', version='v2.5.0-rc1', stage='CANDIDATE')</pre>
             <div class="gate"><span><strong>자동 버전 발급 · MLflow 실행 및 lineage 연결 완료</strong><br />PRJ000212-M-0001 · v2.5.0-rc1 · MLflow Run 7e19c2a · PRJ000212-D-0001:v13</span><b>REGISTERED</b></div>

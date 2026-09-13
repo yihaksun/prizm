@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -486,9 +486,11 @@ function PipelineWorkspace({ runs, schedules, view, project, onProjectChange, on
     <main className="pipeline-workspace-page">
       <header className="pipeline-workspace-heading">
         <div><span className="code-page-kicker">EXPERIMENT WORKSPACE</span><h1>실험 대시보드</h1><p>과제를 선택해 학습 코드와 실행 이력, 예약 상태를 한곳에서 관리합니다.</p></div>
+      </header>
+      <section className="experiment-command-surface" aria-label="실험 실행 도구">
         <ExecutionSelect label="과제 선택" value={project} onChange={onProjectChange}><option value="용접 품질 고도화">PRJ000212 · 용접 품질 고도화</option><option value="Surface Zero Defect">PRJ000274 · Surface Zero Defect</option><option value="Cell Quality Intelligence">PRJ000341 · Cell Quality Intelligence</option></ExecutionSelect>
         <div className="experiment-heading-actions"><div className="pipeline-summary"><span><i className="is-running" /><strong>{projectRuns.filter((run) => run.status !== '완료').length}</strong> 실행 중</span><span><i /><strong>{projectSchedules.filter((schedule) => schedule.active).length}</strong> 활성 스케줄</span></div><button type="button" className="experiment-run-button" onClick={onExecute}><Play size={15} fill="currentColor" /> 파이프라인 실행</button></div>
-      </header>
+      </section>
       <Tabs value={view} onValueChange={(value) => onViewChange(value as 'runs' | 'schedules')} className="pipeline-workspace-tabs">
         <TabsList variant="line" className="pipeline-workspace-tablist"><TabsTrigger value="runs">실행 내역 <b>{projectRuns.length}</b></TabsTrigger><TabsTrigger value="schedules">예약·스케줄 <b>{projectSchedules.length}</b></TabsTrigger></TabsList>
         <TabsContent value="runs" className="pipeline-workspace-content">
@@ -561,6 +563,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
   const [accessRequested, setAccessRequested] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [sdkOpen, setSdkOpen] = useState(false);
+  const runNotebookFrameRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -612,6 +615,15 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
 
   const selectedAsset = assets.find((asset) => asset.id === selectedAssetId) ?? assets[0];
   const activeRun = runRecords.find((run) => run.id === activeRunId) ?? runRecords[0];
+
+  const focusRunNotebookOutput = () => {
+    const frame = runNotebookFrameRef.current;
+    const output = frame?.contentDocument?.getElementById('test-output');
+    const targetTop = output && frame?.contentWindow
+      ? output.getBoundingClientRect().top + frame.contentWindow.scrollY
+      : 0;
+    frame?.contentWindow?.scrollTo({ top: Math.max(0, targetTop - 20), behavior: 'auto' });
+  };
 
   const filteredAssets = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -961,10 +973,20 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
             <div className="run-large-progress"><i style={{ width: `${activeRun.progress}%` }} /></div>
             <div className="run-stage-track"><span className={activeRun.progress >= 10 ? 'is-done' : 'is-current'}>{activeRun.progress >= 10 ? <Check size={13} /> : <Clock3 size={13} />}환경 준비</span><span className={activeRun.progress >= 24 ? 'is-done' : activeRun.progress >= 10 ? 'is-current' : ''}>{activeRun.progress >= 24 ? <Check size={13} /> : <Clock3 size={13} />}데이터 연결</span><span className={activeRun.progress >= 100 ? 'is-done' : activeRun.progress >= 24 ? 'is-current' : ''}>{activeRun.progress >= 100 ? <Check size={13} /> : <Clock3 size={13} />}모델 학습</span><span className={activeRun.progress >= 100 ? 'is-done' : ''}>{activeRun.progress >= 100 && <Check size={13} />}평가·등록</span></div>
           </section>
-          <div className="run-detail-grid">
-            <section className="run-console"><header><div><TerminalSquare size={15} /><span>실행 로그</span></div><button type="button" onClick={() => setRunRecords((current) => current.map((run) => run.id === activeRun.id ? { ...run, progress: Math.min(100, run.progress + 21), status: run.progress + 21 >= 100 ? '완료' : '실행 중' } : run))}>상태 새로고침</button></header><pre>{`[${activeRun.requestedAt}] Airflow DAG request accepted · ${activeRun.id}\n[PARAMETERS] Papermill injected 7 parameters\n[PRECHECK] Code and asset permission passed (8/8)\n[ENV] ${activeRun.environment} image prepared\n[RESOURCE] ${activeRun.resource} allocation requested\n[DATA] ${activeRun.data} downloaded\n[TRACKING] MLflow run started · experiment usn-weld-defect\n${activeRun.progress >= 24 ? '[RUNNING] Training started · NVIDIA A100 20GB\n[TRAIN] Epoch 31/80 · mAP50 0.934 · loss 0.147' : '[WAITING] Worker allocation in progress'}\n${activeRun.progress >= 100 ? '[COMPLETE] Epoch 80/80 · mAP50 0.968 · loss 0.082\n[MLFLOW] Parameters, metrics and model artifact logged\n[REGISTER] PRIZM model version created · WeldNet 2.5.0' : '[STREAM] Awaiting next checkpoint...'}`}</pre></section>
+          <div className="run-detail-grid run-notebook-grid">
+            <section className="run-notebook-result">
+              <header><div><FileCode2 size={16} /><span><strong>Notebook 실행 결과</strong><small>Papermill HTML · 코드와 출력 보존</small></span></div><div><span className={activeRun.progress >= 100 ? 'run-output-state is-complete' : 'run-output-state'}>{activeRun.progress >= 100 ? '실행 완료' : '출력 동기화 중'}</span><button type="button" onClick={focusRunNotebookOutput}><Eye size={14} /> 주요 결과</button><button type="button" onClick={() => setRunRecords((current) => current.map((run) => run.id === activeRun.id ? { ...run, progress: Math.min(100, run.progress + 21), status: run.progress + 21 >= 100 ? '완료' : '실행 중' } : run))}>출력 새로고침</button></div></header>
+              <iframe
+                ref={runNotebookFrameRef}
+                className="run-notebook-frame"
+                src="/notebooks/weld-training-v2.4.1.html"
+                title={`${activeRun.title} Notebook 실행 결과`}
+                sandbox="allow-same-origin"
+              />
+            </section>
             <aside className="run-context-panel"><section><span>실행 조건</span><dl><div><dt>코드</dt><dd>{activeRun.version}</dd></div><div><dt>데이터</dt><dd>{activeRun.data}</dd></div><div><dt>실행 환경</dt><dd>{activeRun.environment}</dd></div><div><dt>운영체제</dt><dd>Ubuntu 22.04</dd></div><div><dt>실행 자원</dt><dd>{activeRun.resource}</dd></div><div><dt>실행자</dt><dd>이학선</dd></div><div><dt>Seed</dt><dd>42</dd></div></dl></section><section><span>자원 사용</span><div className="resource-meter"><div><small>GPU</small><strong>92%</strong></div><i><b style={{ width: '92%' }} /></i></div><div className="resource-meter"><div><small>GPU Memory</small><strong>15.4 / 20 GB</strong></div><i><b style={{ width: '77%' }} /></i></div></section></aside>
           </div>
+          <details className="run-log-details"><summary><span><TerminalSquare size={15} /> Airflow 실행 로그</span><small>기술 진단 정보 · 필요할 때 펼쳐보기</small><ChevronDown size={14} /></summary><pre>{`[${activeRun.requestedAt}] Airflow DAG request accepted · ${activeRun.id}\n[PARAMETERS] Papermill injected 7 parameters\n[PRECHECK] Code and asset permission passed (8/8)\n[ENV] ${activeRun.environment} image prepared\n[RESOURCE] ${activeRun.resource} allocation requested\n[DATA] ${activeRun.data} downloaded\n[TRACKING] MLflow run started · experiment usn-weld-defect\n${activeRun.progress >= 24 ? '[RUNNING] Training started · NVIDIA A100 20GB\n[TRAIN] Epoch 31/80 · mAP50 0.934 · loss 0.147' : '[WAITING] Worker allocation in progress'}\n${activeRun.progress >= 100 ? '[COMPLETE] Epoch 80/80 · mAP50 0.968 · loss 0.082\n[MLFLOW] Parameters, metrics and model artifact logged\n[REGISTER] PRIZM model version created · WeldNet 2.5.0' : '[STREAM] Awaiting next checkpoint...'}`}</pre></details>
           {activeRun.progress >= 100 && <section className="run-result-strip"><div><ShieldCheck size={22} /><span><strong>평가 기준 7개 통과</strong><small>WELD-DETECTION-GATE:v3</small></span></div><div><span>mAP50</span><strong>0.968</strong></div><div><span>생성 모델</span><strong>WeldNet 2.5.0</strong></div><button type="button">모델 자산 확인 <ArrowRight size={14} /></button></section>}
         </main>}
 

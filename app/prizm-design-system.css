@@ -350,6 +350,157 @@
 }
 .evaluation-summary small { font-size: .75rem; }
 
+/* Experiment dashboard: one rounded command surface, then the work result. */
+.pipeline-workspace-heading {
+  min-height: 7.2rem;
+  padding: .35rem 0 1.35rem;
+}
+.experiment-command-surface {
+  min-height: 5.6rem;
+  padding: .85rem 1rem;
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) auto;
+  align-items: end;
+  gap: 1.25rem;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: .6rem;
+  box-shadow: var(--panel-shadow);
+}
+.experiment-command-surface > .execution-native-select { width: min(30rem, 100%); }
+.experiment-command-surface .execution-native-select-control {
+  height: 2.75rem;
+  background: #f8f9f9;
+  border-color: #dce2e5;
+  border-radius: .4rem;
+}
+.experiment-heading-actions { margin: 0; align-items: center; }
+.experiment-heading-actions .pipeline-summary {
+  margin: 0;
+  background: transparent;
+  border: 0;
+}
+.experiment-heading-actions .pipeline-summary > span {
+  min-width: 8.3rem;
+  height: 2.75rem;
+  padding-inline: .8rem;
+  font-size: .75rem;
+}
+.experiment-heading-actions .pipeline-summary > span + span { border-left-color: var(--line); }
+.experiment-run-button {
+  height: 2.75rem;
+  border-radius: .4rem;
+  font-size: .8rem;
+}
+.pipeline-workspace-tabs { margin-top: 1rem; }
+.pipeline-workspace-tablist b { font-size: .75rem; }
+.pipeline-project-name,
+.pipeline-table td:nth-child(2) small,
+.pipeline-mini-progress span,
+.pipeline-table td:last-child button { font-size: .75rem; }
+
+.run-progress-card {
+  border-color: var(--line);
+  border-radius: .6rem;
+  box-shadow: var(--panel-shadow);
+}
+.run-progress-heading small,
+.run-stage-track span,
+.run-detail-header p,
+.run-header-actions button,
+.run-context-panel section > span,
+.run-context-panel dl div,
+.resource-meter > div,
+.resource-meter > div strong { font-size: .75rem; }
+.run-notebook-grid { grid-template-columns: minmax(0, 1fr) 20rem; align-items: start; }
+.run-notebook-result {
+  min-width: 0;
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: .6rem;
+  box-shadow: var(--panel-shadow);
+}
+.run-notebook-result > header {
+  min-height: 4.25rem;
+  padding: .7rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #f6f6f4;
+  border-bottom: 1px solid var(--line);
+}
+.run-notebook-result > header > div { display: flex; align-items: center; gap: .65rem; }
+.run-notebook-result > header > div:first-child { color: var(--hyundai-blue); }
+.run-notebook-result > header span > strong,
+.run-notebook-result > header span > small { display: block; }
+.run-notebook-result > header span > strong { color: var(--ink); font-size: .88rem; }
+.run-notebook-result > header span > small { margin-top: .18rem; color: var(--muted); font-size: .75rem; }
+.run-notebook-result > header button {
+  height: 2.2rem;
+  padding-inline: .7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  color: var(--hyundai-blue);
+  background: white;
+  border: 1px solid #cad6dc;
+  border-radius: .35rem;
+  font-size: .75rem;
+}
+.run-output-state {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  color: #6b7c87;
+  font-size: .75rem;
+  white-space: nowrap;
+}
+.run-output-state::before { content: ''; width: .42rem; height: .42rem; background: var(--active-blue); border-radius: 50%; }
+.run-output-state.is-complete { color: #24705d; }
+.run-output-state.is-complete::before { background: var(--success); }
+.run-notebook-frame { width: 100%; height: min(72vh, 54rem); display: block; background: white; border: 0; }
+.run-context-panel {
+  overflow: hidden;
+  border-color: var(--line);
+  border-radius: .6rem;
+  box-shadow: var(--panel-shadow);
+}
+.run-log-details {
+  margin-top: 1rem;
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: .55rem;
+}
+.run-log-details summary {
+  min-height: 3.6rem;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+.run-log-details summary::-webkit-details-marker { display: none; }
+.run-log-details summary > span { display: inline-flex; align-items: center; gap: .45rem; font-size: .82rem; font-weight: 620; }
+.run-log-details summary > small { margin-left: auto; color: var(--muted); font-size: .75rem; }
+.run-log-details summary > svg { color: #6c7f8b; transition: transform 160ms ease; }
+.run-log-details[open] summary > svg { transform: rotate(180deg); }
+.run-log-details pre {
+  margin: 0;
+  padding: 1.1rem 1.2rem;
+  overflow-x: auto;
+  color: #bdd7e2;
+  background: #071828;
+  border-top: 1px solid #17364c;
+  font-family: var(--mono);
+  font-size: .75rem;
+  line-height: 1.75;
+}
+
 /* Resource screens: readable catalog, neutral cards, status through text. */
 .resource-page-heading { min-height: 8rem; }
 .resource-summary-strip {
@@ -875,6 +1026,13 @@
   .evaluation-workspace-page,
   .vision-demo-page { padding-inline: 1.5rem; }
 }
+@media (max-width: 1080px) {
+  .experiment-command-surface { grid-template-columns: 1fr; align-items: stretch; }
+  .experiment-command-surface > .execution-native-select { width: 100%; }
+  .experiment-heading-actions { justify-content: space-between; }
+  .run-notebook-grid { grid-template-columns: 1fr; }
+  .run-notebook-frame { height: 68vh; }
+}
 @media (max-width: 767px) {
   .workspace-tabs { padding-inline: .8rem; }
   .code-assets-page,
@@ -891,6 +1049,11 @@
   .contribution-grid { grid-template-columns: 1fr; }
   .contribution-kpi { border-right: 0; border-bottom: 1px solid var(--line); }
   .contribution-kpi:last-child { border-bottom: 0; }
+  .experiment-heading-actions { align-items: stretch; flex-direction: column; }
+  .experiment-heading-actions .pipeline-summary { width: 100%; }
+  .experiment-heading-actions .pipeline-summary > span { min-width: 0; flex: 1; }
+  .run-notebook-result > header { align-items: flex-start; flex-direction: column; }
+  .run-notebook-result > header > div:last-child { width: 100%; justify-content: space-between; }
 }
 
 @media (min-width: 768px) and (max-width: 900px) {
