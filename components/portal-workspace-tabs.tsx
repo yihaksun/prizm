@@ -1,27 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { ComponentType } from 'react';
 import { useRouter } from 'next/navigation';
-import { Activity, Boxes, CheckSquare, Cpu, X } from 'lucide-react';
-import { PrizmCodeIcon, PrizmDataIcon, PrizmEvaluationIcon, PrizmModelIcon, PrizmPipelineIcon } from '@/components/prizm-asset-icons';
+import { X } from 'lucide-react';
 
 export type PortalTabId = 'my-tasks' | 'projects' | 'data-assets' | 'code-assets' | 'model-assets' | 'pipeline-runs' | 'model-evaluation' | 'model-monitoring' | 'execution-resources' | 'execution-environments';
 
 type PortalTab = { id: PortalTabId; label: string; href: string; scrollY?: number };
-type PortalTabIcon = ComponentType<{ size?: number; className?: string }>;
 
-const tabDefinitions: Record<PortalTabId, { label: string; href: string; icon: PortalTabIcon }> = {
-  'my-tasks': { label: '나의 작업', href: '/work/tasks', icon: CheckSquare },
-  'projects': { label: '과제관리', href: '/projects', icon: Boxes },
-  'data-assets': { label: '데이터 자산', href: '/assets/data', icon: PrizmDataIcon },
-  'code-assets': { label: '코드 자산', href: '/assets/code', icon: PrizmCodeIcon },
-  'model-assets': { label: '모델 자산', href: '/assets/models', icon: PrizmModelIcon },
-  'pipeline-runs': { label: '실험 대시보드', href: '/assets/code?pipeline=1', icon: PrizmPipelineIcon },
-  'model-evaluation': { label: '모델 평가', href: '/evaluation/models', icon: PrizmEvaluationIcon },
-  'model-monitoring': { label: '모델 성능', href: '/monitoring/models', icon: Activity },
-  'execution-resources': { label: '실행 자원 관리', href: '/resources/compute', icon: Cpu },
-  'execution-environments': { label: '실행 환경 관리', href: '/resources/environments', icon: Boxes },
+const tabDefinitions: Record<PortalTabId, { label: string; href: string }> = {
+  'my-tasks': { label: '나의 작업', href: '/work/tasks' },
+  'projects': { label: '과제관리', href: '/projects' },
+  'data-assets': { label: '데이터 자산', href: '/assets/data' },
+  'code-assets': { label: '코드 자산', href: '/assets/code' },
+  'model-assets': { label: '모델 자산', href: '/assets/models' },
+  'pipeline-runs': { label: '실험 대시보드', href: '/assets/code?pipeline=1' },
+  'model-evaluation': { label: '모델 평가', href: '/evaluation/models' },
+  'model-monitoring': { label: '모델 성능', href: '/monitoring/models' },
+  'execution-resources': { label: '실행 자원 관리', href: '/resources/compute' },
+  'execution-environments': { label: '실행 환경 관리', href: '/resources/environments' },
 };
 
 const storageKey = 'prizm-open-menu-tabs';
@@ -122,7 +119,6 @@ export function PortalWorkspaceTabs({ current }: { current: PortalTabId }) {
 
   if (!tabs.length) return null;
   return <nav className="workspace-tabs" aria-label="열린 메뉴 작업공간"><div className="workspace-tab-track">{tabs.map((tab) => {
-    const definition = tabDefinitions[tab.id];
-    return <span className={tab.id === current ? 'workspace-tab-item is-active' : 'workspace-tab-item'} key={tab.id}><button type="button" aria-current={tab.id === current ? 'page' : undefined} onClick={() => activateTab(tab)}><definition.icon size={14} /><span>{tab.label}</span></button><button type="button" className="workspace-tab-close" aria-label={`${tab.label} 탭 닫기`} onClick={() => closeTab(tab.id)}><X size={12} /></button></span>;
+    return <span className={tab.id === current ? 'workspace-tab-item is-active' : 'workspace-tab-item'} key={tab.id}><button type="button" aria-current={tab.id === current ? 'page' : undefined} onClick={() => activateTab(tab)}><span>{tab.label}</span></button><button type="button" className="workspace-tab-close" aria-label={`${tab.label} 탭 닫기`} onClick={() => closeTab(tab.id)}><X size={12} /></button></span>;
   })}</div>{tabs.length > 1 && <button type="button" className="workspace-close-all" onClick={closeAll}><X size={13} /> 모두 닫기</button>}</nav>;
 }
