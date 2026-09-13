@@ -521,6 +521,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
   const [openWorkspaceTabs, setOpenWorkspaceTabs] = useState<WorkspaceTask[]>([]);
   const [selectedAssetId, setSelectedAssetId] = useState(initialAssets[0].id);
   const [selectedVersion, setSelectedVersion] = useState(initialAssets[0].version);
+  const [detailTab, setDetailTab] = useState('notebook');
   const [query, setQuery] = useState('');
   const [scope, setScope] = useState('전체 코드');
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
@@ -588,7 +589,8 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
       if (assetId && initialAssets.some((asset) => asset.id === assetId)) {
         const asset = initialAssets.find((item) => item.id === assetId);
         setSelectedAssetId(assetId);
-        if (asset) setSelectedVersion(asset.version);
+        if (asset) setSelectedVersion(params.get('version') ?? asset.version);
+        if (['notebook', 'packages', 'versions', 'runs', 'lineage', 'access'].includes(params.get('tab') ?? '')) setDetailTab(params.get('tab')!);
         setScreen('detail');
         setOpenWorkspaceTabs((current) => {
           const next = dataId && !current.includes('data') ? [...current, 'data' as const] : current;
@@ -658,10 +660,20 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
     setSelectedAssetId(id);
     if (asset) setSelectedVersion(asset.version);
     setScreen('detail');
+    setDetailTab('notebook');
     setOpenWorkspaceTabs((current) => current.includes('detail') ? current : [...current, 'detail']);
     setPreflightPassed(false);
     window.history.replaceState(null, '', `/assets/code?asset=${id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const updateCodeDetailUrl = (nextTab: string, nextVersion = selectedVersion) => {
+    setDetailTab(nextTab);
+    const params = new URLSearchParams(window.location.search);
+    params.set('asset', selectedAssetId);
+    params.set('tab', nextTab);
+    params.set('version', nextVersion);
+    window.history.replaceState(null, '', `/assets/code?${params.toString()}`);
   };
 
   const navigateWorkspace = (nextScreen: WorkspaceScreen) => {
@@ -916,7 +928,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
                 <span className="detail-meta-divider" />
                 <label className="detail-version-control">
                   <span>버전</span>
-                  <span className="detail-version-native"><select value={selectedVersion} onChange={(event) => { setSelectedVersion(event.target.value); setNotice(`${event.target.value} 버전을 불러왔습니다.`); }} aria-label="코드 버전 선택">{getVersionOptions(selectedAsset.version).map((version) => <option value={version} key={version}>{version}{version === selectedAsset.version ? ' · 최신' : ''}</option>)}</select><ChevronDown size={13} /></span>
+                  <span className="detail-version-native"><select value={selectedVersion} onChange={(event) => { setSelectedVersion(event.target.value); updateCodeDetailUrl(detailTab, event.target.value); setNotice(`${event.target.value} 버전을 불러왔습니다.`); }} aria-label="코드 버전 선택">{getVersionOptions(selectedAsset.version).map((version) => <option value={version} key={version}>{version}{version === selectedAsset.version ? ' · 최신' : ''}</option>)}</select><ChevronDown size={13} /></span>
                 </label>
               </div>
             </div>
@@ -930,7 +942,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
           </header>
 
           {selectedAsset.restricted ? <section className="restricted-notebook"><LockKeyhole size={28} /><span>ACCESS RESTRICTED</span><h2>Notebook 본문 열람 권한이 필요합니다</h2><p>자산의 존재와 일반 메타정보는 확인할 수 있습니다. HMMA 생산물류혁신팀의 승인을 받으면 코드와 실행 이력을 열람할 수 있습니다.</p><button type="button" onClick={() => setAccessRequested(true)}>{accessRequested ? '권한 요청이 접수되었습니다' : '열람 권한 요청'}</button></section> :
-          <Tabs defaultValue="notebook" className="code-detail-tabs">
+          <Tabs value={detailTab} onValueChange={(value) => updateCodeDetailUrl(value)} className="code-detail-tabs">
             <TabsList variant="line" className="code-detail-tablist">
               <TabsTrigger value="notebook">Notebook</TabsTrigger>
               <TabsTrigger value="packages">패키지</TabsTrigger>
@@ -960,7 +972,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
           </Tabs>}
         </main>}
 
-        {!visionDemoOpen && screen === 'pipeline' && <PipelineWorkspace runs={runRecords} schedules={schedules} view={pipelineView} project={pipelineProject} onProjectChange={(project) => { setPipelineProject(project); const asset = assets.find((item) => item.project === project && item.executable); if (asset) setPipelineCodeAssetId(asset.id); }} onExecute={openPipelineCodePicker} onViewChange={setPipelineView} onOpenRun={(id) => { setActiveRunId(id); navigateWorkspace('run'); }} />}
+        {!visionDemoOpen && screen === 'pipeline' && <PipelineWorkspace runs={runRecords} schedules={schedules} view={pipelineView} project={pipelineProject} onProjectChange={(project) => { setPipelineProject(project); const asset = assets.find((item) => item.project === project && item.executable); if (asset) setPipelineCodeAssetId(asset.id); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); params.set('project', project === '용접 품질 고도화' ? 'PRJ000212' : project); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onExecute={openPipelineCodePicker} onViewChange={(value) => { setPipelineView(value); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); value === 'schedules' ? params.set('view', 'schedules') : params.delete('view'); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onOpenRun={(id) => { setActiveRunId(id); navigateWorkspace('run'); }} />}
 
         {!visionDemoOpen && screen === 'run' && <main className="run-detail-page">
           <button className="detail-back" type="button" onClick={() => navigateWorkspace('pipeline')}><ArrowLeft size={15} /> 실험 대시보드</button>
