@@ -32,13 +32,14 @@
 }
 .workspace-tab-item.is-active::after {
   content: '';
-  width: 1.35rem;
+  width: auto;
   height: 2px;
   position: absolute;
   bottom: 0;
-  left: 50%;
+  left: .55rem;
+  right: .55rem;
   background: var(--active-blue);
-  transform: translateX(-50%);
+  border-radius: 999px 999px 0 0;
 }
 .workspace-tab-item { position: relative; }
 .workspace-tab-close { width: 1.75rem; opacity: .32; transition: color 150ms ease, background 150ms ease, opacity 150ms ease; }
