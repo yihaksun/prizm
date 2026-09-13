@@ -518,6 +518,176 @@
 .task-process-grid article.is-active { border-color: #77aebe; }
 .task-completion-callout { border-left-width: 1px; }
 
+/* Asset catalog cards share one optical grid, regardless of preview type. */
+.code-asset-list.is-grid {
+  --asset-media-height: 9.75rem;
+  --asset-copy-height: 10.25rem;
+}
+.code-asset-list.is-grid .code-asset-main {
+  height: 100%;
+  display: grid;
+  grid-template-rows: var(--asset-media-height) minmax(var(--asset-copy-height), 1fr);
+  align-content: start;
+}
+.code-asset-list.is-grid :is(.notebook-thumbnail, .data-catalog-thumbnail, .model-catalog-thumbnail) {
+  width: 100%;
+  height: var(--asset-media-height);
+  min-height: var(--asset-media-height);
+  max-height: var(--asset-media-height);
+  margin: 0;
+  flex: none;
+}
+.code-asset-list.is-grid .code-asset-copy {
+  min-height: var(--asset-copy-height);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.code-asset-list.is-grid .code-asset-copy h2 {
+  min-height: 2.55rem;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.code-asset-list.is-grid .code-asset-copy > p {
+  min-height: 2.7rem;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.code-asset-list.is-grid .code-asset-context { margin-top: auto; }
+
+/* Project management now uses the same calm surface system as the asset catalog. */
+.projects-page {
+  max-width: 108rem;
+  padding: 2.2rem clamp(1.5rem, 3vw, 3.5rem) 4.5rem;
+}
+.projects-heading { min-height: 8.4rem; }
+.projects-heading > div > span {
+  color: #607789;
+  font-size: .67rem;
+  letter-spacing: .11em;
+}
+.projects-heading h1 {
+  margin-top: .62rem;
+  font-size: 2.25rem;
+  font-weight: 620;
+}
+.projects-heading p { margin-top: .8rem; font-size: .92rem; }
+.projects-heading > button {
+  height: 2.8rem;
+  margin-top: .45rem;
+  padding-inline: 1.05rem;
+  border-radius: .42rem;
+  font-size: .8rem;
+}
+.projects-summary {
+  overflow: hidden;
+  background: rgba(255,255,255,.88);
+  border-color: var(--line);
+  border-radius: .6rem;
+  box-shadow: var(--panel-shadow);
+}
+.projects-summary article {
+  min-height: 7.1rem;
+  padding: 1.15rem 1.3rem;
+  border-right-color: var(--line);
+}
+.projects-summary span { color: #607789; font-size: .73rem; }
+.projects-summary strong { color: var(--ink); font-size: 1.7rem; font-weight: 610; }
+.projects-summary small { color: #7d8d98; font-size: .68rem; }
+.projects-toolbar {
+  min-height: 4.5rem;
+  margin-top: 1.15rem;
+  padding: .65rem .8rem .65rem 1.05rem;
+  background: rgba(255,255,255,.9);
+  border-color: var(--line);
+  border-radius: .55rem;
+  box-shadow: var(--panel-shadow);
+}
+.projects-toolbar input { font-size: .83rem; }
+.projects-toolbar > div button,
+.projects-filter { min-height: 2.45rem; border-radius: .35rem; font-size: .72rem; }
+.projects-list {
+  margin-top: .9rem;
+  overflow: hidden;
+  border-color: var(--line);
+  border-radius: .6rem;
+  box-shadow: var(--panel-shadow);
+}
+.projects-list > header,
+.projects-list > .project-row {
+  grid-template-columns: minmax(13.5rem, 1.35fr) minmax(9rem, 1fr) 6.5rem 9.5rem minmax(8.5rem, .8fr) 5.4rem 6.7rem;
+  gap: .65rem;
+}
+.projects-list > header {
+  min-height: 3.25rem;
+  padding-inline: 1.25rem;
+  color: #657b89;
+  background: #f3f3f1;
+  font-size: .69rem;
+}
+.projects-list > .project-row {
+  min-height: 6rem;
+  padding-inline: 1.25rem;
+  border-bottom-color: #e5e8e9;
+}
+.projects-list > .project-row:hover { background: #f8faf9; }
+.project-state {
+  width: 2.45rem;
+  height: 2.45rem;
+  color: var(--hyundai-blue);
+  background: transparent !important;
+  border: 1px solid #cbd7dd;
+  border-radius: .42rem;
+}
+.project-name-cell small { font-size: .61rem; }
+.project-name-cell strong { margin-top: .3rem; font-size: .82rem; }
+.project-site-cell strong,
+.project-owner-cell strong { font-size: .73rem; }
+.project-site-cell small,
+.project-owner-cell small,
+.project-stage { font-size: .65rem; }
+.project-status {
+  padding: .22rem .45rem;
+  border: 1px solid rgba(85,113,128,.13);
+  border-radius: .28rem;
+  font-size: .64rem;
+}
+.project-assets-cell em {
+  padding: .3rem .42rem;
+  border: 1px solid #e0e5e7;
+  border-radius: .28rem;
+  font-size: .62rem;
+}
+.project-updated { font-size: .67rem; }
+.project-permission-button {
+  height: 2.3rem;
+  padding-inline: .7rem;
+  border-radius: .35rem;
+  font-size: .68rem;
+}
+.project-permission-dialog { border-radius: .75rem !important; box-shadow: 0 1.5rem 4.5rem rgba(4,24,43,.2) !important; }
+.project-permission-header { padding: 1.55rem 1.7rem 1.3rem; background: white; }
+.project-permission-header [data-slot="dialog-description"] { font-size: .76rem; }
+.project-permission-body { padding: 1.25rem 1.4rem 1.45rem; background: #f6f5f3; }
+.project-permission-guide,
+.project-role-card { border-radius: .5rem; overflow: hidden; }
+.project-role-icon { border-radius: .38rem; }
+.project-permission-footer { min-height: 4.8rem; padding: .9rem 1.4rem !important; background: white; }
+.project-permission-footer button { height: 2.5rem; border-radius: .35rem; font-size: .7rem; }
+
+@media (max-width: 1380px) {
+  .projects-list > header,
+  .projects-list > .project-row {
+    grid-template-columns: minmax(13rem, 1.3fr) minmax(8.5rem, 1fr) 6.25rem 8.75rem minmax(8rem, .8fr) 6.5rem;
+  }
+  .projects-list > header > :nth-child(6),
+  .projects-list > .project-row > :nth-child(6) { display: none; }
+}
+
 @media (max-width: 1180px) {
   .code-assets-page,
   .code-detail-page,
@@ -536,4 +706,6 @@
   .pipeline-workspace-heading h1,
   .evaluation-workspace-heading h1,
   .vision-demo-page-header h1 { font-size: 1.8rem; }
+  .code-asset-list.is-grid { --asset-media-height: 9rem; }
+  .projects-page { padding-inline: 1rem; }
 }
