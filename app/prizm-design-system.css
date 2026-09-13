@@ -1075,38 +1075,41 @@
   position: relative;
   isolation: isolate;
   background:
-    linear-gradient(180deg, #fbfaf9 0, #f7f4f2 28rem, #f3f5f5 62rem, #f6f3f2 100%);
+    linear-gradient(142deg, rgba(228,220,211,.3) 0%, rgba(246,243,242,0) 34%),
+    linear-gradient(156deg, rgba(170,202,230,.19) 0%, rgba(238,243,247,.46) 44%, rgba(246,243,242,0) 73%),
+    linear-gradient(24deg, rgba(100,88,184,.055) 0%, rgba(246,243,242,0) 48%),
+    #f6f3f2;
 }
 .model-prism-atmosphere {
-  width: min(76rem, 86vw);
-  height: 34rem;
+  width: min(46rem, 58vw);
+  height: 20rem;
   position: absolute;
   z-index: 0;
   top: 3.15rem;
   right: 0;
   overflow: hidden;
+  opacity: .48;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(180deg, #000 0 72%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 0 72%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0 58%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0 58%, transparent 100%);
 }
 .model-prism-atmosphere::before {
   content: '';
   position: absolute;
-  inset: -8rem -3rem 3rem 8%;
+  inset: -6rem -5rem 1rem 12%;
   background:
-    linear-gradient(128deg, transparent 0 38%, rgba(255,255,255,.76) 38.2% 45%, transparent 45.2%),
-    linear-gradient(132deg, transparent 0 48%, rgba(170,202,230,.24) 48.2% 64%, rgba(226,238,244,.08) 64.2% 72%, transparent 72.2%),
-    linear-gradient(150deg, rgba(228,220,211,.18), rgba(255,255,255,0) 58%);
-  clip-path: polygon(24% 0, 100% 0, 100% 58%, 54% 83%, 18% 100%, 0 78%);
+    linear-gradient(128deg, transparent 0 40%, rgba(255,255,255,.82) 40.2% 46%, transparent 46.2%),
+    linear-gradient(132deg, transparent 0 50%, rgba(170,202,230,.28) 50.2% 65%, transparent 65.2%);
+  clip-path: polygon(30% 0, 100% 0, 100% 48%, 47% 84%, 12% 100%, 0 79%);
 }
 .model-prism-atmosphere::after {
   content: '';
   width: 78%;
   height: 1px;
   position: absolute;
-  top: 14rem;
-  right: -8%;
-  opacity: .6;
+  top: 9rem;
+  right: -14%;
+  opacity: .42;
   background: linear-gradient(90deg, transparent, rgba(0,170,210,.62) 32%, rgba(89,105,208,.38) 62%, rgba(238,154,85,.2) 78%, transparent);
   transform: rotate(-27deg);
   transform-origin: center;
@@ -1124,7 +1127,8 @@
 }
 .model-assets-page .code-search-box {
   border-color: rgba(191,207,216,.78);
-  box-shadow: 0 .65rem 2.2rem rgba(8,36,62,.065);
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 .7rem 2.25rem rgba(8,36,62,.075);
 }
 .model-assets-page .code-filter-chips button {
   background: rgba(255,255,255,.84);
@@ -1132,7 +1136,8 @@
 }
 .model-assets-page .code-asset-list.is-grid .model-catalog-card {
   border-color: rgba(211,220,224,.92);
-  box-shadow: 0 .7rem 2.2rem rgba(8,36,62,.065);
+  background: rgba(255,255,255,.99);
+  box-shadow: 0 .75rem 2.3rem rgba(8,36,62,.075);
 }
 .model-assets-page .code-asset-list.is-grid .model-catalog-card:hover {
   border-color: #aabfc9;
@@ -1152,7 +1157,7 @@
 }
 .model-detail-page .code-detail-tabcontent { margin-top: 1rem; }
 @media (max-width: 767px) {
-  .model-prism-atmosphere { width: 100%; height: 25rem; opacity: .72; }
+  .model-prism-atmosphere { width: 78%; height: 17rem; opacity: .36; }
   .model-assets-page .model-page-heading { min-height: 8rem; }
   .model-detail-page .code-detail-tablist { padding-inline: .6rem; }
 }
