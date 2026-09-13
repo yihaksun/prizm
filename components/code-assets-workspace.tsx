@@ -80,6 +80,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { VisionMlopsDemo, type DemoStage } from '@/components/vision-mlops-demo';
 import { PortalWorkspaceTabs, type PortalTabId } from '@/components/portal-workspace-tabs';
 import { AssetSdkDialog } from '@/components/asset-sdk-dialog';
+import { PrizmCodeIcon } from '@/components/prizm-asset-icons';
 
 type NavGroup = {
   label: string;
@@ -892,7 +893,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
         {!visionDemoOpen && screen === 'detail' && <main className="code-detail-page">
           <button className="detail-back" type="button" onClick={openCatalog}><ArrowLeft size={15} /> 코드 자산</button>
           <header className="code-detail-header">
-            <div className="detail-title-mark"><FileCode2 size={23} /><span>IPYNB</span></div>
+            <div className="detail-title-mark"><PrizmCodeIcon size={24} /><span>IPYNB</span></div>
             <div className="code-detail-title">
               <span className="detail-project-name">{selectedAsset.project}</span>
               <h1>{selectedAsset.title}</h1>

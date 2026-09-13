@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CodeAssetsTopbar, PortalNavigation } from '@/components/code-assets-workspace';
 import { PortalWorkspaceTabs } from '@/components/portal-workspace-tabs';
 import { AssetSdkDialog } from '@/components/asset-sdk-dialog';
+import { PrizmDataIcon } from '@/components/prizm-asset-icons';
 
 type DataAsset = {
   id: string;
@@ -54,7 +55,7 @@ function DataAssetDetail({ onClose, onTrain, favorite, onFavorite }: { onClose: 
   return <main className="code-detail-page data-detail-page">
       <button className="detail-back" type="button" onClick={onClose}><ArrowLeft size={15} /> 데이터 자산</button>
       <header className="code-detail-header">
-        <div className="detail-title-mark data-title-mark"><Database size={23} /><span>DATA</span></div>
+        <div className="detail-title-mark data-title-mark"><PrizmDataIcon size={24} /><span>DATA</span></div>
         <div className="code-detail-title"><span className="detail-project-name">용접 품질 고도화</span><h1>용접 비드 결함 데이터셋</h1><p>울산 / 차체 · 용접 · 제조AI기술개발팀</p><div className="detail-identity-row"><span className="code-role role-학습">Image</span><span className="detail-trust is-verified"><i />검증 완료</span><span className="detail-asset-id">PRJ000212-D-0001</span><span className="detail-meta-divider" /><label className="detail-version-control"><span>버전</span><span className="detail-version-native"><select value={version} onChange={(event) => setVersion(event.target.value)} aria-label="데이터 버전 선택"><option value="v13">v13 · 최신</option><option value="v12">v12</option><option value="v11">v11</option></select><ChevronDown size={13} /></span></label></div></div>
         <div className="code-detail-actions"><button type="button" className={favorite ? 'detail-icon-action is-active' : 'detail-icon-action'} onClick={onFavorite} aria-label="즐겨찾기"><Star size={17} fill={favorite ? 'currentColor' : 'none'} /></button><button type="button" className="detail-secondary-action"><Download size={15} /> 다운로드</button><button type="button" className="detail-secondary-action" onClick={() => setSdkOpen(true)}><TerminalSquare size={15} /> SDK 스니펫</button><button type="button" className="detail-secondary-action"><Copy size={15} /> 다른 과제에서 사용</button><button type="button" className="detail-primary-action" onClick={onTrain}><FileCode2 size={15} /> 이 데이터로 학습</button></div>
       </header>

@@ -1,20 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Activity, Box, Boxes, CheckSquare, Cpu, Database, FileCode2, ShieldCheck, Workflow, X, type LucideIcon } from 'lucide-react';
+import type { ComponentType } from 'react';
+import { Activity, Boxes, CheckSquare, Cpu, X } from 'lucide-react';
+import { PrizmCodeIcon, PrizmDataIcon, PrizmEvaluationIcon, PrizmModelIcon, PrizmPipelineIcon } from '@/components/prizm-asset-icons';
 
 export type PortalTabId = 'my-tasks' | 'projects' | 'data-assets' | 'code-assets' | 'model-assets' | 'pipeline-runs' | 'model-evaluation' | 'model-monitoring' | 'execution-resources' | 'execution-environments';
 
 type PortalTab = { id: PortalTabId; label: string; href: string };
+type PortalTabIcon = ComponentType<{ size?: number; className?: string }>;
 
-const tabDefinitions: Record<PortalTabId, { label: string; href: string; icon: LucideIcon }> = {
+const tabDefinitions: Record<PortalTabId, { label: string; href: string; icon: PortalTabIcon }> = {
   'my-tasks': { label: '나의 작업', href: '/work/tasks', icon: CheckSquare },
   'projects': { label: '과제관리', href: '/projects', icon: Boxes },
-  'data-assets': { label: '데이터 자산', href: '/assets/data', icon: Database },
-  'code-assets': { label: '코드 자산', href: '/assets/code', icon: FileCode2 },
-  'model-assets': { label: '모델 자산', href: '/assets/models', icon: Box },
-  'pipeline-runs': { label: '실험 대시보드', href: '/assets/code?pipeline=1', icon: Workflow },
-  'model-evaluation': { label: '모델 평가', href: '/evaluation/models', icon: ShieldCheck },
+  'data-assets': { label: '데이터 자산', href: '/assets/data', icon: PrizmDataIcon },
+  'code-assets': { label: '코드 자산', href: '/assets/code', icon: PrizmCodeIcon },
+  'model-assets': { label: '모델 자산', href: '/assets/models', icon: PrizmModelIcon },
+  'pipeline-runs': { label: '실험 대시보드', href: '/assets/code?pipeline=1', icon: PrizmPipelineIcon },
+  'model-evaluation': { label: '모델 평가', href: '/evaluation/models', icon: PrizmEvaluationIcon },
   'model-monitoring': { label: '모델 성능', href: '/monitoring/models', icon: Activity },
   'execution-resources': { label: '실행 자원 관리', href: '/resources/compute', icon: Cpu },
   'execution-environments': { label: '실행 환경 관리', href: '/resources/environments', icon: Boxes },

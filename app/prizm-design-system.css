@@ -1,0 +1,539 @@
+/* PRIZM design system expansion · 2026-09-13
+   Shared surface, type and interaction rules for asset and operations workspaces. */
+:root {
+  --panel-shadow: 0 0.55rem 1.8rem rgba(8, 36, 62, 0.055);
+  --panel-shadow-hover: 0 0.85rem 2.2rem rgba(8, 36, 62, 0.09);
+}
+
+.workspace-tabs {
+  min-height: 3.2rem;
+  padding-inline: clamp(1.5rem, 2.8vw, 3.25rem);
+  align-items: center;
+  background: rgba(246, 243, 242, 0.97);
+  backdrop-filter: blur(14px);
+}
+.workspace-tab-item {
+  height: 2.4rem;
+  margin-right: 0.25rem;
+  border: 0;
+  border-radius: 0.35rem;
+  font-size: 0.86rem;
+}
+.workspace-tab-item:first-child { border-left: 0; }
+.workspace-tab-item.is-active {
+  height: 2.4rem;
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 0.2rem 0.7rem rgba(8,36,62,.055);
+}
+.workspace-tab-item.is-active::after {
+  content: '';
+  width: 1.1rem;
+  height: 2px;
+  position: absolute;
+  bottom: 0;
+  left: 0.8rem;
+  background: var(--active-blue);
+}
+.workspace-tab-item { position: relative; }
+.workspace-close-all {
+  margin: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  font-size: 0.72rem;
+}
+
+/* Asset catalogs: one open work surface with content cards only. */
+.code-assets-page,
+.pipeline-workspace-page,
+.evaluation-workspace-page,
+.vision-demo-page { max-width: 108rem; }
+.code-search-panel {
+  border-radius: 0.55rem;
+  box-shadow: var(--panel-shadow);
+}
+.code-results-section { background: transparent; }
+.code-results-toolbar {
+  padding-inline: 0.15rem;
+  background: transparent;
+  border: 0;
+}
+.code-asset-list.is-grid { gap: 1.25rem; }
+.code-asset-list.is-grid .code-asset-row {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  box-shadow: var(--panel-shadow);
+}
+.code-asset-list.is-grid .code-asset-row:hover {
+  border-color: #bdcbd2;
+  box-shadow: var(--panel-shadow-hover);
+  transform: none;
+}
+.code-asset-list.is-grid .code-asset-row.is-demo-ready,
+.data-catalog-card.is-demo-ready,
+.model-catalog-card.is-demo-ready { box-shadow: var(--panel-shadow); }
+.code-asset-list.is-grid .code-asset-row.is-demo-ready:hover { box-shadow: var(--panel-shadow-hover); }
+.code-asset-project { color: #506b7d; font-size: 0.76rem; }
+.code-asset-copy h2 { font-size: 1.02rem; line-height: 1.4; }
+.code-asset-copy p { color: var(--muted); font-size: 0.84rem; line-height: 1.55; }
+.code-asset-context,
+.code-asset-technical,
+.code-asset-owner,
+.code-asset-trust { font-size: 0.72rem; }
+
+/* Real manufacturing evidence becomes the cover. */
+.data-catalog-thumbnail,
+.model-catalog-thumbnail,
+.notebook-thumbnail {
+  border-color: transparent;
+}
+.model-result-image { position: absolute; inset: 0; }
+.model-result-image img {
+  object-fit: cover;
+  filter: brightness(.72) saturate(.78) contrast(1.08);
+}
+.model-catalog-thumbnail.has-result-image::after {
+  background: linear-gradient(180deg, rgba(4,19,34,.62), rgba(4,19,34,.05) 46%, rgba(4,19,34,.88));
+}
+.model-detection-frame {
+  width: 28%;
+  height: 30%;
+  position: absolute;
+  z-index: 1;
+  top: 34%;
+  left: 47%;
+  border: 1.5px solid #68dff3;
+}
+.model-detection-frame i {
+  position: absolute;
+  top: -1.05rem;
+  left: -1px;
+  padding: .15rem .28rem;
+  color: #031827;
+  background: #68dff3;
+  font-family: var(--mono);
+  font-size: .45rem;
+  font-style: normal;
+  white-space: nowrap;
+}
+.model-output-preview {
+  position: absolute;
+  inset: 1.55rem .75rem 1.8rem;
+  z-index: 1;
+  color: #74deed;
+}
+.output-classification {
+  padding: .5rem .35rem;
+  display: grid;
+  align-content: center;
+  gap: .55rem;
+}
+.output-classification span {
+  display: grid;
+  grid-template-columns: 1fr 5.2rem;
+  align-items: center;
+  gap: .55rem;
+  color: #9db8c8;
+  font-family: var(--mono);
+  font-size: .48rem;
+}
+.output-classification span::after {
+  content: '';
+  height: .32rem;
+  grid-column: 2;
+  grid-row: 1;
+  background: rgba(114,155,178,.18);
+}
+.output-classification i {
+  height: .32rem;
+  z-index: 1;
+  grid-column: 2;
+  grid-row: 1;
+  background: linear-gradient(90deg, #087aa4, #53d8e9);
+}
+.output-detection i:first-child {
+  width: 42%;
+  height: 45%;
+  position: absolute;
+  top: 20%;
+  left: 45%;
+  border: 1px solid #62dfeb;
+}
+.output-detection i:first-child b {
+  position: absolute;
+  top: -.9rem;
+  left: -1px;
+  padding: .12rem .24rem;
+  color: #041d2e;
+  background: #62dfeb;
+  font-family: var(--mono);
+  font-size: .43rem;
+  white-space: nowrap;
+}
+.output-detection i:nth-child(2) {
+  width: 24%;
+  height: 28%;
+  position: absolute;
+  top: 49%;
+  left: 14%;
+  border: 1px solid rgba(109,208,226,.65);
+}
+.output-detection svg { width: 100%; height: 100%; }
+.output-detection svg path { fill: none; stroke: rgba(115,175,199,.35); stroke-width: 2; }
+.output-cells {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  align-content: center;
+  gap: .3rem;
+}
+.output-cells i {
+  height: 2.1rem;
+  border: 1px solid rgba(106,191,211,.42);
+  border-radius: .8rem;
+  background: linear-gradient(90deg, rgba(34,102,133,.3), rgba(71,185,199,.14));
+}
+.output-cells i.is-anomaly {
+  border-color: #e9b763;
+  box-shadow: inset 0 0 0 2px rgba(233,183,99,.16);
+}
+.output-assembly { display: grid; place-items: center; }
+.output-assembly > svg { color: #62dcea; }
+.output-assembly i {
+  width: .42rem;
+  height: .42rem;
+  position: absolute;
+  background: #68d5b9;
+  border-radius: 50%;
+}
+.output-assembly i:nth-of-type(1) { top: 20%; left: 24%; }
+.output-assembly i:nth-of-type(2) { top: 32%; right: 22%; }
+.output-assembly i:nth-of-type(3) { bottom: 18%; left: 34%; }
+.output-assembly span,
+.output-signal span {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  color: #8ca9bb;
+  font-family: var(--mono);
+  font-size: .46rem;
+}
+.output-signal svg { width: 100%; height: 100%; }
+.output-signal path { fill: none; stroke: #54d9e8; stroke-width: 2; }
+.output-signal path.baseline { stroke: rgba(126,161,181,.3); stroke-width: 1; stroke-dasharray: 4 4; }
+
+/* Shared asset detail hierarchy. */
+.code-detail-page { max-width: 108rem; }
+.code-detail-header {
+  padding: 1.4rem 0 1.55rem;
+  align-items: start;
+}
+.detail-title-mark {
+  width: 3.3rem;
+  height: 3.8rem;
+  color: var(--hyundai-blue);
+  background: transparent;
+  border: 1px solid #cbd6dc;
+  border-radius: 0.4rem;
+}
+.data-title-mark,
+.model-title-mark { color: var(--hyundai-blue); background: transparent; }
+.detail-title-mark span {
+  color: #667b8a;
+  font-size: 0.48rem;
+  letter-spacing: .055em;
+}
+.code-detail-title h1 { font-size: 1.85rem; font-weight: 620; }
+.code-detail-title p { color: var(--muted); font-size: 0.83rem; }
+.detail-project-name { color: #506b7d; font-size: 0.76rem; }
+.code-detail-tabs,
+.data-change-summary,
+.data-sample-browser,
+.model-purpose-panel,
+.model-card-document,
+.model-evaluation-panel,
+.deployment-list,
+.lineage-panel,
+.access-panel > section {
+  overflow: hidden;
+  border-color: var(--line);
+  border-radius: 0.55rem;
+  box-shadow: var(--panel-shadow);
+}
+.code-detail-tablist { padding-inline: 1.25rem; }
+.code-detail-tablist [data-slot="tabs-trigger"] { font-size: 0.82rem; }
+.data-detail-stats {
+  border-color: var(--line);
+  border-radius: 0.55rem;
+  box-shadow: var(--panel-shadow);
+}
+.data-detail-stats span { font-size: 0.75rem; }
+.data-detail-stats strong { font-size: 1.35rem; font-weight: 600; }
+.data-change-summary > header,
+.data-sample-browser > header,
+.model-purpose-panel > header,
+.model-evaluation-panel > header,
+.deployment-list > header { padding-inline: 1.25rem; }
+.data-change-summary h3,
+.data-sample-browser > header h3,
+.model-purpose-panel > header h3,
+.model-evaluation-panel > header h3,
+.deployment-list > header h3 { font-size: 1rem; }
+.data-change-summary > header span,
+.data-sample-browser > header span,
+.model-purpose-panel > header span:first-child,
+.model-evaluation-panel > header span,
+.deployment-list > header span { color: #607789; font-size: 0.64rem; }
+.data-change-summary > div span { color: #557387; }
+.model-detail-score {
+  overflow: hidden;
+  border: 0;
+  border-radius: 0.55rem;
+  box-shadow: var(--panel-shadow);
+}
+.model-purpose-grid span,
+.model-purpose-grid small { font-size: 0.7rem; }
+.model-purpose-grid strong { font-size: 0.8rem; line-height: 1.45; }
+.model-business-strip {
+  border-color: #d3e1dc;
+  border-radius: 0.45rem;
+}
+.model-card-document > header { min-height: 7.2rem; }
+.model-card-document article span { color: #607789; }
+.model-card-document article h4 { font-size: 0.95rem; }
+.model-card-document article p { font-size: 0.78rem; }
+.deployment-site {
+  color: var(--hyundai-blue);
+  background: transparent;
+  border: 1px solid #ccd8dd;
+  border-radius: 0.35rem;
+}
+
+/* Experiment and evaluation use tables as the primary work surface. */
+.pipeline-workspace-heading,
+.evaluation-workspace-heading { min-height: 8rem; }
+.pipeline-workspace-heading h1,
+.evaluation-workspace-heading h1 { font-size: 2.2rem; }
+.pipeline-workspace-heading p,
+.evaluation-workspace-heading p { font-size: 0.95rem; }
+.pipeline-workspace-tabs,
+.evaluation-queue {
+  border-color: var(--line);
+  border-radius: 0.55rem;
+  box-shadow: var(--panel-shadow);
+}
+.pipeline-table th,
+.evaluation-table th,
+.runtime-list-head {
+  color: #637584;
+  background: #f4f3f1;
+  font-size: 0.75rem;
+}
+.pipeline-table td,
+.evaluation-table td { font-size: 0.84rem; }
+.pipeline-table tbody tr:hover,
+.evaluation-table tbody tr:hover,
+.runtime-image-row:hover {
+  background: #f8fafb;
+  box-shadow: none;
+}
+.evaluation-queue > header {
+  padding-inline: 1.35rem;
+  border-bottom-color: var(--line);
+}
+.evaluation-queue > header > div > span { color: #607789; font-size: .64rem; }
+.evaluation-queue > header h2 { font-size: 1.05rem; }
+.evaluation-queue > header nav button { height: 2.3rem; font-size: .74rem; border-radius: .32rem; }
+.evaluation-summary {
+  border-color: var(--line);
+  border-radius: .45rem;
+}
+.evaluation-summary small { font-size: .66rem; }
+
+/* Resource screens: readable catalog, neutral cards, status through text. */
+.resource-page-heading { min-height: 8rem; }
+.resource-summary-strip {
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  box-shadow: var(--panel-shadow);
+}
+.resource-summary-strip > div + div { border-left-color: var(--line); }
+.resource-summary-strip span { color: var(--muted); font-size: .72rem; }
+.resource-summary-strip strong {
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 1.65rem;
+  font-weight: 600;
+}
+.resource-summary-strip small { color: #557387; font-size: .68rem; }
+.resource-toolbar {
+  border-color: var(--line);
+  border-radius: .5rem;
+  box-shadow: var(--panel-shadow);
+}
+.resource-toolbar input,
+.resource-filter-tabs button,
+.resource-filter-button { font-size: .76rem; }
+.resource-results > header {
+  padding-inline: .15rem;
+  background: transparent;
+  border: 0;
+}
+.resource-results > header strong { font-size: .92rem; }
+.resource-results > header div span { font-size: .7rem; }
+.resource-profile-grid,
+.runtime-image-grid {
+  gap: 1.25rem;
+  background: transparent;
+  border: 0;
+}
+.resource-profile-card,
+.runtime-image-card {
+  border: 1px solid var(--line);
+  border-radius: .55rem;
+  box-shadow: var(--panel-shadow);
+}
+.resource-profile-card:hover,
+.runtime-image-card:hover {
+  background: #fff;
+  box-shadow: var(--panel-shadow-hover);
+}
+.resource-card-icon,
+.runtime-cube,
+.runtime-list-identity > i {
+  color: var(--hyundai-blue);
+  background: transparent;
+  border: 1px solid #cbd7dd;
+  border-radius: .38rem;
+}
+.tone-gpu .resource-card-icon {
+  color: var(--hyundai-blue);
+  background: transparent;
+  border-color: #cbd7dd;
+}
+.resource-profile-card header div > span,
+.runtime-image-card header div > span { font-size: .58rem; }
+.resource-profile-card h2,
+.runtime-image-card h2 { font-size: 1.04rem; }
+.resource-recommended { font-size: .62rem; }
+.resource-spec-grid small,
+.resource-capacity span,
+.runtime-image-card dt,
+.runtime-status { font-size: .66rem; }
+.resource-spec-grid strong,
+.resource-capacity strong,
+.runtime-image-card dd { font-size: .75rem; }
+.resource-profile-card > p,
+.runtime-image-card header p { font-size: .74rem; }
+.runtime-image-list {
+  border-color: var(--line);
+  border-radius: .55rem;
+  box-shadow: var(--panel-shadow);
+}
+.runtime-list-identity strong { font-size: .74rem; }
+.runtime-list-identity small,
+.runtime-list-value strong,
+.runtime-list-packages strong,
+.runtime-list-updated strong { font-size: .65rem; }
+.runtime-row-action { font-size: .68rem; }
+.runtime-detail-dialog {
+  border-radius: .75rem !important;
+  box-shadow: 0 1.5rem 4.5rem rgba(4,24,43,.2) !important;
+}
+.runtime-detail-header {
+  padding: 1.65rem 1.8rem 1.35rem;
+  background: white;
+  border-bottom: 1px solid var(--line);
+}
+.runtime-detail-header > span { color: #607789; font-size: .64rem; }
+.runtime-detail-header [data-slot="dialog-title"] { color: var(--ink); }
+.runtime-detail-header [data-slot="dialog-description"] { color: var(--muted); font-size: .82rem; }
+.runtime-detail-dialog > button { color: #6f7f8b !important; }
+.runtime-detail-body { padding: 1.35rem 1.55rem 1.55rem; background: #f7f6f4; }
+.runtime-package-panel h3 { font-size: .95rem; }
+.runtime-package-panel th,
+.runtime-package-panel td { font-size: .66rem; }
+
+/* Monitoring and closed-loop screens keep the evidence prominent. */
+.vision-demo-shell { background: var(--light-sand); }
+.vision-demo-page-header h1 { font-size: 2.2rem; }
+.vision-demo-page-header p { font-size: .95rem; }
+.global-monitor-hero,
+.factory-network,
+.factory-overview,
+.factory-projects,
+.factory-alerts,
+.model-health-hero,
+.drift-panel,
+.impact-panel,
+.closed-loop-card,
+.incident-process,
+.data-asset-hero,
+.data-version-diff,
+.train-launch-panel,
+.evaluation-comparison,
+.field-metrics,
+.model-lineage {
+  overflow: hidden;
+  border-color: var(--line);
+  border-radius: .55rem;
+  box-shadow: var(--panel-shadow);
+}
+.global-monitor-kpis article span,
+.factory-overview span,
+.health-kpis article span { font-size: .72rem; }
+.global-monitor-kpis article strong,
+.factory-overview strong,
+.health-kpis article strong { font-weight: 600; }
+.factory-network > header > div > span,
+.factory-projects > header span,
+.factory-alerts > header span,
+.drift-panel header span,
+.impact-panel header span,
+.incident-process > header span,
+.model-lineage > header span { color: #607789; }
+.factory-network > div > button:hover,
+.factory-projects > button:hover { box-shadow: none; background: #f8fafb; }
+.factory-network > div > button.has-warning,
+.factory-alerts .is-warning { box-shadow: none; }
+.data-diff-grid article.is-highlight {
+  color: var(--hyundai-blue);
+  background: #f3f7f8;
+  box-shadow: none;
+}
+.closed-loop-card { border-left-width: 1px; }
+.closed-loop-icon {
+  color: var(--hyundai-blue);
+  background: #edf5f7;
+}
+
+/* Keep functional borders and focus, remove decorative status stripes. */
+.task-process-grid article.is-active,
+.pipeline-code-options > button.is-selected,
+.pipeline-code-options > button:hover:not(:disabled) {
+  box-shadow: none;
+}
+.task-process-grid article.is-active { border-color: #77aebe; }
+.task-completion-callout { border-left-width: 1px; }
+
+@media (max-width: 1180px) {
+  .code-assets-page,
+  .code-detail-page,
+  .pipeline-workspace-page,
+  .evaluation-workspace-page,
+  .vision-demo-page { padding-inline: 1.5rem; }
+}
+@media (max-width: 767px) {
+  .workspace-tabs { padding-inline: .8rem; }
+  .code-assets-page,
+  .code-detail-page,
+  .pipeline-workspace-page,
+  .evaluation-workspace-page,
+  .vision-demo-page { padding-inline: 1rem; }
+  .code-page-heading h1,
+  .pipeline-workspace-heading h1,
+  .evaluation-workspace-heading h1,
+  .vision-demo-page-header h1 { font-size: 1.8rem; }
+}
