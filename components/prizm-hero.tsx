@@ -31,8 +31,8 @@ const factorySources = [
 
 const kpis = [
   { label: '전체 제조 AI 과제', value: '128', meta: '이번 분기 +12' },
-  { label: '운영 배포 모델', value: '64', meta: '정상 98.7%' },
-  { label: '연결 생산 거점', value: '12', meta: '3개 권역' },
+  { label: '운영 배포 모델', value: '556', meta: '정상 98.7%' },
+  { label: '등록된 파이프라인', value: '512', meta: '운영 가능 96.4%' },
   { label: '24시간 추론', value: '2.48M', meta: '실시간 처리량' },
 ];
 
@@ -49,7 +49,7 @@ function FactoryGlyph({ x, y, scale = 1 }: { x: number; y: number; scale?: numbe
   );
 }
 
-export function PrizmHero() {
+export function PrizmFlowCanvas({ className = '', showKpis = true, interactive = true }: { className?: string; showKpis?: boolean; interactive?: boolean }) {
   const [activeStream, setActiveStream] = useState(modelStreams[0].id);
   const active = modelStreams.find((stream) => stream.id === activeStream) ?? modelStreams[0];
 
@@ -64,23 +64,7 @@ export function PrizmHero() {
   };
 
   return (
-    <section className="prizm-hero" aria-labelledby="prizm-hero-title" onPointerMove={handlePointerMove}>
-      <div className="hero-field" aria-hidden="true" />
-
-      <header className="hero-brandbar">
-        <div className="hero-brand-lockup">
-          <Image className="hero-wordmark" src="/prizm-eforest.svg" alt="E-FOREST PRIZM" width={920} height={300} priority />
-          <div className="hero-definition">
-            <h1 id="prizm-hero-title">
-              <span><b>P</b>ipeline for <b>R</b>esource <b>I</b>ntegration</span>
-              <span>toward <em>Z</em>ero-Loss <b>M</b>anufacturing</span>
-            </h1>
-          </div>
-        </div>
-        <div className="hero-network-state"><span><i /> 연결된 공장</span><strong>12개 거점</strong></div>
-      </header>
-
-      <div className="prism-canvas">
+      <div className={`prism-canvas ${className}`.trim()} onPointerMove={interactive ? handlePointerMove : undefined}>
         <div className="canvas-caption">
           <span>ONE DATA PIPELINE</span>
           <i aria-hidden="true" />
@@ -197,7 +181,7 @@ export function PrizmHero() {
           </g>
         </svg>
 
-        <aside className="hero-kpi-rail" aria-label="글로벌 제조 AI 주요 지표">
+        {showKpis && <aside className="hero-kpi-rail" aria-label="글로벌 제조 AI 주요 지표">
           <header><span>제조 AI 모델 운용 현황</span><i /></header>
           {kpis.map((kpi, index) => (
             <div className="hero-kpi" key={kpi.label}>
@@ -206,9 +190,31 @@ export function PrizmHero() {
               <small>{kpi.meta}</small>
             </div>
           ))}
-        </aside>
+        </aside>}
       </div>
+  );
+}
 
+export function PrizmHero() {
+  return (
+    <section className="prizm-hero" aria-labelledby="prizm-hero-title">
+      <div className="hero-field" aria-hidden="true" />
+
+      <header className="hero-brandbar">
+        <a className="hero-brand-lockup" href="/brand" target="_blank" rel="noreferrer" aria-label="PRIZM 브랜드 스토리 새 창에서 보기">
+          <Image className="hero-wordmark" src="/prizm-eforest.svg" alt="E-FOREST PRIZM" width={920} height={300} priority />
+          <div className="hero-definition">
+            <h1 id="prizm-hero-title">
+              <span><b>P</b>ipeline for <b>R</b>esource <b>I</b>ntegration</span>
+              <span>toward <em>Z</em>ero-Loss <b>M</b>anufacturing</span>
+            </h1>
+          </div>
+          <span className="hero-brand-story-link">BRAND STORY ↗</span>
+        </a>
+        <div className="hero-network-state"><span><i /> 연결된 공장</span><strong>12개 거점</strong></div>
+      </header>
+
+      <PrizmFlowCanvas />
     </section>
   );
 }

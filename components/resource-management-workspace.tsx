@@ -9,6 +9,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CodeAssetsTopbar, PortalNavigation } from '@/components/code-assets-workspace';
 import { PortalWorkspaceTabs } from '@/components/portal-workspace-tabs';
+import { PortalButton, PortalPageFrame, PortalPageHeader, PortalWorkspaceSurface } from '@/components/portal-page-primitives';
 
 type ResourceMode = 'compute' | 'environment';
 
@@ -54,11 +55,11 @@ export function ResourceManagementWorkspace({ mode }: { mode: ResourceMode }) {
 
   return <SidebarProvider style={{ '--sidebar-width': '248px' } as CSSProperties}>
     <PortalNavigation screen="catalog" activeNavigation={{ group: '자원관리', child: isCompute ? '실행 자원 관리' : '실행 환경 관리' }} />
-    <div className="app-shell code-assets-shell">
+    <PortalWorkspaceSurface>
       <CodeAssetsTopbar />
       <PortalWorkspaceTabs current={isCompute ? 'execution-resources' : 'execution-environments'} />
-      <main className="code-assets-page resource-management-page">
-        <section className="code-page-heading resource-page-heading"><div><span className="code-page-kicker">RESOURCE MANAGEMENT / {isCompute ? 'COMPUTE PROFILES' : 'RUNTIME IMAGES'}</span><h1>{isCompute ? '실행 자원 관리' : '실행 환경 관리'}</h1><p>{isCompute ? '코드 실행에 할당할 CPU·메모리·GPU 규격과 실시간 가용 상태를 관리합니다.' : '검증된 Docker 이미지를 표준 실행 환경으로 등록하고 코드 자산과 연결합니다.'}</p></div><button className="code-primary-action" type="button"><Plus size={16} /> {isCompute ? '실행 자원 등록' : '실행 환경 등록'}</button></section>
+      <PortalPageFrame className="code-assets-page resource-management-page">
+        <PortalPageHeader className="code-page-heading resource-page-heading" kicker={`RESOURCE MANAGEMENT / ${isCompute ? 'COMPUTE PROFILES' : 'RUNTIME IMAGES'}`} title={isCompute ? '실행 자원 관리' : '실행 환경 관리'} description={isCompute ? '코드 실행에 할당할 CPU·메모리·GPU 규격과 실시간 가용 상태를 관리합니다.' : '검증된 Docker 이미지를 표준 실행 환경으로 등록하고 코드 자산과 연결합니다.'} action={<PortalButton variant="primary"><Plus size={16} /> {isCompute ? '실행 자원 등록' : '실행 환경 등록'}</PortalButton>} />
 
         <section className="resource-summary-strip">
           {isCompute ? <><div><span>운영 프로파일</span><strong>5</strong><small>CPU 2 · GPU 3</small></div><div><span>가용 GPU 슬롯</span><strong>17 / 34</strong><small>A100 실행 할당</small></div><div><span>현재 사용률</span><strong>68%</strong><small>최근 15분 평균</small></div><div><span>평균 대기</span><strong>7분</strong><small>정상 범위</small></div></> : <><div><span>운영 이미지</span><strong>5</strong><small>Python 3.10 · 3.11 · 3.12</small></div><div><span>보안 검증</span><strong>5 / 5</strong><small>취약점 기준 통과</small></div><div><span>연결 코드</span><strong>184</strong><small>활성 버전 기준</small></div><div><span>최근 업데이트</span><strong>오늘</strong><small>pytorch-2.4-yolo12-py311-cu124</small></div></>}
@@ -69,8 +70,8 @@ export function ResourceManagementWorkspace({ mode }: { mode: ResourceMode }) {
         <section className="resource-results"><header><div><strong>{isCompute ? `실행 자원 ${filteredCompute.length}개` : `Docker 이미지 ${filteredImages.length}개`}</strong><span>{isCompute ? '자원 규격과 현재 할당 가능 여부를 함께 표시합니다.' : '운영 승인을 받은 최신 이미지가 먼저 표시됩니다.'}</span></div><span className="resource-live"><i /> 30초 전 동기화</span></header>
           {isCompute ? <div className="resource-profile-grid">{filteredCompute.map((profile) => <ComputeCard profile={profile} key={profile.id} />)}</div> : <div className="runtime-image-list"><div className="runtime-list-head"><span>실행 환경</span><span>Python</span><span>CUDA</span><span>운영체제</span><span>기본 패키지</span><span>상태</span><span>최근 검증</span><span /></div>{filteredImages.map((image) => <EnvironmentRow image={image} onDetails={() => setSelectedImage(image)} key={`${image.id}-${image.tag}`} />)}</div>}
         </section>
-      </main>
-    </div>
+      </PortalPageFrame>
+    </PortalWorkspaceSurface>
     <Dialog open={Boolean(selectedImage)} onOpenChange={(open) => { if (!open) setSelectedImage(null); }}>
       <DialogContent className="runtime-detail-dialog">
         {selectedImage && <><DialogHeader className="runtime-detail-header"><span>RUNTIME IMAGE / {selectedImage.id}</span><DialogTitle>{selectedImage.name}</DialogTitle><DialogDescription>{selectedImage.workload}</DialogDescription></DialogHeader><div className="runtime-detail-body"><section className="runtime-image-identity"><div><span>IMAGE TAG</span><code>{selectedImage.tag}</code></div><button type="button" aria-label="이미지 태그 복사"><Copy size={15} /></button></section><div className="runtime-detail-facts"><div><span>운영체제</span><strong>{selectedImage.os}</strong></div><div><span>Python</span><strong>{selectedImage.python}</strong></div><div><span>CUDA</span><strong>{selectedImage.cuda}</strong></div><div><span>프레임워크</span><strong>{selectedImage.framework}</strong></div><div><span>이미지 크기</span><strong>{selectedImage.size}</strong></div></div><section className="runtime-package-panel"><header><div><span>BASE PYTHON PACKAGES</span><h3>기본 Python 패키지</h3></div><b>{selectedImage.packages.length} packages</b></header><table><thead><tr><th>패키지</th><th>버전</th><th>설치 범위</th></tr></thead><tbody>{selectedImage.packages.map(([name, version]) => <tr key={name}><td>{name}</td><td>{version}</td><td>Base</td></tr>)}</tbody></table></section><section className="runtime-security-row"><ShieldCheck size={18} /><div><strong>보안 검증 완료</strong><span>마지막 스캔 {selectedImage.scan} · Critical 취약점 0건</span></div><code>{selectedImage.digest}</code></section></div></>}

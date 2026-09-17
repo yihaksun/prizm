@@ -9,6 +9,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CodeAssetsTopbar, PortalNavigation } from '@/components/code-assets-workspace';
 import { PortalWorkspaceTabs } from '@/components/portal-workspace-tabs';
+import { PortalButton, PortalPageFrame, PortalPageHeader, PortalWorkspaceSurface } from '@/components/portal-page-primitives';
 
 const projects = [
   { id: 'PRJ000212', title: '용접 품질 고도화', plant: '울산공장', process: '차체 · 용접 2라인', owner: '제조AI기술개발팀', status: '운영', stage: '모니터링', data: 3, code: 5, models: 12, members: 18, updated: '오늘 09:24', tone: 'live' },
@@ -109,15 +110,15 @@ export function ProjectsWorkspace() {
 
   return <SidebarProvider style={{ '--sidebar-width': '248px' } as CSSProperties}>
     <PortalNavigation screen="catalog" activeNavigation={{ group: '과제관리', child: '' }} />
-    <div className="app-shell code-assets-shell">
+    <PortalWorkspaceSurface>
       <CodeAssetsTopbar />
       <PortalWorkspaceTabs current="projects" />
-      <main className="projects-page">
-        <header className="projects-heading"><div><span>PROJECT MANAGEMENT</span><h1>과제 목록</h1><p>제조 AI 과제의 진행 단계와 연결된 데이터·코드·모델을 한곳에서 확인합니다.</p></div><button type="button"><Plus size={16} /> 신규 과제</button></header>
+      <PortalPageFrame className="projects-page">
+        <PortalPageHeader className="projects-heading" kicker="PROJECT MANAGEMENT" title="과제 목록" description="제조 AI 과제의 진행 단계와 연결된 데이터·코드·모델을 한곳에서 확인합니다." action={<PortalButton variant="primary"><Plus size={16} /> 신규 과제</PortalButton>} />
         <section className="projects-summary"><article><span>전체 과제</span><strong>128</strong><small>8개 글로벌 거점</small></article><article><span>운영</span><strong>64</strong><small>이번 달 +4</small></article><article><span>실험 진행</span><strong>18</strong><small>학습 8 · 평가 10</small></article><article><span>확인이 필요한 과제</span><strong>3</strong><small>성능 이상 1 · 승인 2</small></article></section>
         <section className="projects-toolbar"><label><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="과제명, 과제 ID, 공장, 담당 조직 검색" /></label><div>{['전체 과제', '내 과제', '운영', '실험', '준비'].map((item) => <button type="button" className={scope === item ? 'is-active' : ''} onClick={() => setScope(item)} key={item}>{item}</button>)}</div><button type="button" className="projects-filter"><Filter size={14} /> 상세 필터 <ChevronDown size={13} /></button></section>
         <section className="projects-list"><header><span>과제</span><span>거점 / 공정</span><span>현재 단계</span><span>연결 자산</span><span>담당 조직</span><span>최근 변경</span><span>권한</span></header>{filtered.map((project) => <div className="project-row" key={project.id}><span className="project-name-cell"><i className={`project-state ${project.tone}`}><Layers3 size={17} /></i><span><small>{project.id}</small><strong>{project.title}</strong></span></span><span className="project-site-cell"><Factory size={14} /><span><strong>{project.plant}</strong><small>{project.process}</small></span></span><span><b className={`project-status ${project.tone}`}>{project.status}</b><small className="project-stage">{project.stage}</small></span><span className="project-assets-cell"><em><Database size={13} /> {project.data}</em><em><FileCode2 size={13} /> {project.code}</em><em><Box size={13} /> {project.models}</em></span><span className="project-owner-cell"><strong>{project.owner}</strong><small><Users size={11} /> {project.members}명</small></span><span className="project-updated">{project.updated}</span><button type="button" className="project-permission-button" onClick={() => openPermissions(project)}><ShieldCheck size={14} /> 권한 관리</button></div>)}</section>
-      </main>
+      </PortalPageFrame>
       {notice && <output className="project-permission-notice"><Check size={15} />{notice}<button type="button" aria-label="알림 닫기" onClick={() => setNotice('')}><X size={13} /></button></output>}
       <Dialog open={Boolean(permissionProject)} onOpenChange={(open) => { if (!open) setPermissionProject(null); }}>
         <DialogContent className="project-permission-dialog">
@@ -142,6 +143,6 @@ export function ProjectsWorkspace() {
           <DialogFooter className="project-permission-footer"><span>총 {Object.values(draftAccess).reduce((sum, members) => sum + members.length, 0)}명의 핵심 구성원</span><button type="button" onClick={() => setPermissionProject(null)}>취소</button><button type="button" className="project-permission-save" onClick={savePermissions}><Check size={14} /> 권한 구성 저장</button></DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PortalWorkspaceSurface>
   </SidebarProvider>;
 }

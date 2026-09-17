@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CodeAssetsTopbar, PortalNavigation } from '@/components/code-assets-workspace';
 import { PortalWorkspaceTabs } from '@/components/portal-workspace-tabs';
 import { AssetSdkDialog } from '@/components/asset-sdk-dialog';
-import { PrizmDataIcon } from '@/components/prizm-asset-icons';
+import { PortalButton, PortalDetailFrame, PortalFilterSurface, PortalPageFrame, PortalPageHeader, PortalPrismAtmosphere, PortalWorkspaceSurface } from '@/components/portal-page-primitives';
 
 type DataAsset = {
   id: string;
@@ -64,10 +64,9 @@ function DataAssetDetail({ onClose, onTrain, favorite, onFavorite }: { onClose: 
     params.set('version', nextVersion);
     window.history.replaceState(null, '', `/assets/data?${params.toString()}`);
   };
-  return <main className="code-detail-page data-detail-page">
+  return <PortalDetailFrame className="code-detail-page data-detail-page">
       <button className="detail-back" type="button" onClick={onClose}><ArrowLeft size={15} /> 데이터 자산</button>
       <header className="code-detail-header">
-        <div className="detail-title-mark data-title-mark"><PrizmDataIcon size={24} /><span>DATA</span></div>
         <div className="code-detail-title"><span className="detail-project-name">용접 품질 고도화</span><h1>용접 비드 결함 데이터셋</h1><p>울산 / 차체 · 용접 · 제조AI기술개발팀</p><div className="detail-identity-row"><span className="code-role role-학습">Image</span><span className="detail-trust is-verified"><i />검증 완료</span><span className="detail-asset-id">PRJ000212-D-0001</span><span className="detail-meta-divider" /><label className="detail-version-control"><span>버전</span><span className="detail-version-native"><select value={version} onChange={(event) => { setVersion(event.target.value); updateDetailUrl(detailTab, event.target.value); }} aria-label="데이터 버전 선택"><option value="v13">v13 · 최신</option><option value="v12">v12</option><option value="v11">v11</option></select><ChevronDown size={13} /></span></label></div></div>
         <div className="code-detail-actions"><button type="button" className={favorite ? 'detail-icon-action is-active' : 'detail-icon-action'} onClick={onFavorite} aria-label="즐겨찾기"><Star size={17} fill={favorite ? 'currentColor' : 'none'} /></button><button type="button" className="detail-secondary-action"><Download size={15} /> 다운로드</button><button type="button" className="detail-secondary-action" onClick={() => setSdkOpen(true)}><TerminalSquare size={15} /> SDK 스니펫</button><button type="button" className="detail-secondary-action"><Copy size={15} /> 다른 과제에서 사용</button><button type="button" className="detail-primary-action" onClick={onTrain}><FileCode2 size={15} /> 이 데이터로 학습</button></div>
       </header>
@@ -81,7 +80,7 @@ function DataAssetDetail({ onClose, onTrain, favorite, onFavorite }: { onClose: 
         <TabsContent value="access" className="code-detail-tabcontent"><div className="access-panel"><section><span className="detail-section-label">공개 범위</span><h3>제조솔루션본부 내 검색 가능</h3><p>원본 이미지 열람과 다운로드는 울산 차체 품질 조직의 권한 정책을 적용합니다.</p><div className="access-scope"><div className="is-active"><Database size={16} /><strong>메타정보</strong><span>본부 구성원</span></div><div className="is-active"><FileCode2 size={16} /><strong>학습 연결</strong><span>과제 실행자</span></div><div><KeyRound size={16} /><strong>원본 열람</strong><span>승인 사용자</span></div><div><Users size={16} /><strong>접근 관리</strong><span>자산 책임자</span></div></div></section></div></TabsContent>
       </Tabs>
       <AssetSdkDialog open={sdkOpen} onOpenChange={setSdkOpen} type="data" assetId="PRJ000212-D-0001" version={version} title="용접 비드 결함 데이터셋" />
-    </main>;
+  </PortalDetailFrame>;
 }
 
 export function DataAssetsWorkspace() {
@@ -117,20 +116,18 @@ export function DataAssetsWorkspace() {
 
   return <SidebarProvider style={{ '--sidebar-width': '248px' } as CSSProperties}>
     <PortalNavigation screen="catalog" demoStage="data" />
-    <div className="app-shell code-assets-shell">
+    <PortalWorkspaceSurface>
       <CodeAssetsTopbar />
       <PortalWorkspaceTabs current="data-assets" />
-      {selected ? <DataAssetDetail favorite={favorites.has('PRJ000212-D-0001')} onFavorite={() => setFavorites((current) => { const next = new Set(current); next.has('PRJ000212-D-0001') ? next.delete('PRJ000212-D-0001') : next.add('PRJ000212-D-0001'); return next; })} onTrain={() => { window.location.href = '/assets/code?asset=PRJ000212-C-0001&data=PRJ000212-D-0001'; }} onClose={() => { setSelected(false); window.history.replaceState(null, '', '/assets/data'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} /> : <main className="code-assets-page">
-        <section className="code-page-heading">
-          <div><span className="code-page-kicker">ASSET MANAGEMENT / DATA REGISTRY</span><h1>데이터 자산</h1><p>공장과 과제에서 생성된 학습 데이터를 찾고, 버전과 품질 근거를 확인합니다.</p></div>
-          <button className="code-primary-action" type="button"><Plus size={16} /> 데이터 등록</button>
-        </section>
+      <PortalPrismAtmosphere />
+      {selected ? <DataAssetDetail favorite={favorites.has('PRJ000212-D-0001')} onFavorite={() => setFavorites((current) => { const next = new Set(current); next.has('PRJ000212-D-0001') ? next.delete('PRJ000212-D-0001') : next.add('PRJ000212-D-0001'); return next; })} onTrain={() => { window.location.href = '/assets/code?asset=PRJ000212-C-0001&data=PRJ000212-D-0001'; }} onClose={() => { setSelected(false); window.history.replaceState(null, '', '/assets/data'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} /> : <PortalPageFrame className="code-assets-page">
+        <PortalPageHeader className="code-page-heading" kicker="ASSET MANAGEMENT / DATA REGISTRY" title="데이터 자산" description="공장과 과제에서 생성된 학습 데이터를 찾고, 버전과 품질 근거를 확인합니다." action={<PortalButton variant="primary"><Plus size={16} /> 데이터 등록</PortalButton>} />
 
-        <section className="code-search-panel" aria-label="데이터 자산 검색">
+        <PortalFilterSurface className="code-search-panel" aria-label="데이터 자산 검색">
           <label className="code-search-box"><Search size={20} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="데이터명, 과제, 공장, 공정으로 검색" />{query && <button type="button" aria-label="검색어 지우기" onClick={() => setQuery('')}><X size={15} /></button>}<kbd>⌘ K</kbd></label>
           <div className="code-scope-row">{['전체 데이터', '내 데이터', '공유받음', '검증 완료', '즐겨찾기'].map((item) => <button type="button" className={scope === item ? 'is-active' : ''} onClick={() => setScope(item)} key={item}>{item}</button>)}</div>
           <div className="code-filter-row"><div className="code-filter-chips"><button type="button" className={typeFilter ? 'is-active' : ''} onClick={() => setTypeFilter(typeFilter ? null : 'Image')}>데이터 유형 {typeFilter && `· ${typeFilter}`} <ChevronDown size={13} /></button><button type="button" className={plantFilter ? 'is-active' : ''} onClick={() => setPlantFilter(plantFilter ? null : '울산')}>공장·공정 {plantFilter && `· ${plantFilter}`} <ChevronDown size={13} /></button><button type="button"><SlidersHorizontal size={13} /> 필터 더 보기</button></div><span className="data-catalog-status"><i /> 품질 검증 통과 데이터만 표시</span></div>
-        </section>
+        </PortalFilterSurface>
 
         <section className="code-results-section">
           <header className="code-results-toolbar"><div><strong>검색 결과 {filtered.length}개</strong><span>최신 버전과 품질 검증 상태를 반영한 결과입니다.</span></div><div><button type="button" className="code-sort">최근 업데이트순 <ChevronDown size={13} /></button><span className="code-view-switch"><button type="button" className={view === 'list' ? 'is-active' : ''} aria-label="목록 보기" onClick={() => setView('list')}><List size={16} /></button><button type="button" className={view === 'grid' ? 'is-active' : ''} aria-label="카드 보기" onClick={() => setView('grid')}><Grid2X2 size={15} /></button></span></div></header>
@@ -139,7 +136,7 @@ export function DataAssetsWorkspace() {
             <div className="code-asset-technical"><span>{asset.size}</span><span>{asset.labels}</span><small>{asset.id}</small></div><div className="code-asset-owner"><strong>{asset.owner}</strong><span>{asset.version} · {asset.updated}</span></div><div className="code-asset-trust"><strong className="is-verified">검증 완료</strong><span>품질 {asset.quality}</span></div><button type="button" className={favorites.has(asset.id) ? 'code-favorite is-active' : 'code-favorite'} onClick={() => setFavorites((current) => { const next = new Set(current); next.has(asset.id) ? next.delete(asset.id) : next.add(asset.id); return next; })} aria-label="즐겨찾기"><Star size={17} fill={favorites.has(asset.id) ? 'currentColor' : 'none'} /></button><ArrowRight className="code-row-arrow" size={16} />
           </article>)}</div>
         </section>
-      </main>}
-    </div>
+      </PortalPageFrame>}
+    </PortalWorkspaceSurface>
   </SidebarProvider>;
 }

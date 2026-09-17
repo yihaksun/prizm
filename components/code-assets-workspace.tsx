@@ -9,6 +9,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   Bell,
+  Bookmark,
   Box,
   CalendarClock,
   Check,
@@ -24,6 +25,7 @@ import {
   Factory,
   FileCode2,
   GitBranch,
+  GitFork,
   Grid2X2,
   KeyRound,
   Layers3,
@@ -32,10 +34,14 @@ import {
   List,
   ListChecks,
   LockKeyhole,
+  Link2,
+  MessageSquareText,
   MoreHorizontal,
   PencilLine,
   Play,
   Plus,
+  Power,
+  Quote,
   RotateCcw,
   Rocket,
   Search,
@@ -79,8 +85,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VisionMlopsDemo, type DemoStage } from '@/components/vision-mlops-demo';
 import { PortalWorkspaceTabs, type PortalTabId } from '@/components/portal-workspace-tabs';
+import { PortalButton, PortalDetailFrame, PortalFilterSurface, PortalPageFrame, PortalPageHeader, PortalPrismAtmosphere, PortalWorkspaceSurface } from '@/components/portal-page-primitives';
 import { AssetSdkDialog } from '@/components/asset-sdk-dialog';
-import { PrizmCodeIcon } from '@/components/prizm-asset-icons';
 
 type NavGroup = {
   label: string;
@@ -156,12 +162,12 @@ function getVersionOptions(currentVersion: string) {
 }
 
 const myWorkGroups: NavGroup[] = [
-  { label: '나의 작업', icon: CheckSquare, badge: 2, children: [{ label: '할 일', href: '/work/tasks' }, { label: '처리 이력', href: '/#history' }] },
+  { label: '나의 작업', icon: CheckSquare, badge: 2, children: [{ label: '할 일', href: '/work/tasks' }, { label: '작업 이력', href: '/work/history' }] },
   { label: '즐겨찾기', icon: Star, children: [{ label: '즐겨찾는 과제', href: '/#flow' }, { label: '즐겨찾는 자산', href: '/assets/code' }] },
 ];
 
 const platformGroups: NavGroup[] = [
-  { label: '대시보드', icon: LayoutDashboard, children: [{ label: '홈', href: '/' }, { label: '전사 현황', href: '/#contribution' }, { label: '거점 현황', href: '/#sites' }, { label: '자원 현황', href: '/#execute' }] },
+  { label: '대시보드', icon: LayoutDashboard, children: [{ label: '홈', href: '/' }, { label: '오늘의 작업', href: '/#attention' }, { label: '거점 운영', href: '/#sites' }, { label: '파이프라인 현황', href: '/#execute' }, { label: '성과 근거', href: '/#evidence' }, { label: '재무 기여', href: '/#contribution' }] },
   { label: '과제관리', icon: Layers3, href: '/projects' },
   { label: '데이터관리', icon: Database, children: [{ label: '이미지 카탈로그', href: '/image-catalog/review' }, { label: '데이터 연결 매뉴얼', href: '/#assets' }] },
   { label: '자산관리', icon: LibraryBig, active: true, children: [{ label: '모델 자산', href: '/assets/models' }, { label: '코드 자산', href: '/assets/code', current: true }, { label: '데이터 자산', href: '/assets/data' }, { label: '파이프라인 개발 매뉴얼', href: '/#flow' }, { label: 'SDK 매뉴얼', href: '/#flow' }] },
@@ -341,7 +347,7 @@ function NotebookThumbnail({ asset }: { asset: Pick<CodeAsset, 'preview' | 'prev
   const scatter = [[12, 62], [22, 46], [30, 70], [39, 34], [48, 54], [58, 28], [65, 64], [75, 42], [83, 22], [91, 51]];
 
   return (
-    <figure className={`notebook-thumbnail preview-${asset.preview}`}>
+    <figure className={`notebook-thumbnail preview-${asset.preview} ${asset.previewImage ? 'has-result-image' : ''}`}>
       <figcaption className="sr-only">{asset.previewLabel} {asset.previewMetric} Notebook 자동 미리보기</figcaption>
       <header><span>NOTEBOOK OUTPUT</span><b>AUTO</b></header>
       <div className="notebook-thumbnail-body">
@@ -483,10 +489,8 @@ function PipelineWorkspace({ runs, schedules, view, project, onProjectChange, on
   const projectRuns = runs.filter((run) => run.project === project);
   const projectSchedules = schedules.filter((schedule) => schedule.project === project);
   return (
-    <main className="pipeline-workspace-page">
-      <header className="pipeline-workspace-heading">
-        <div><span className="code-page-kicker">EXPERIMENT WORKSPACE</span><h1>실험 대시보드</h1><p>과제를 선택해 학습 코드와 실행 이력, 예약 상태를 한곳에서 관리합니다.</p></div>
-      </header>
+    <PortalPageFrame className="pipeline-workspace-page">
+      <PortalPageHeader className="pipeline-workspace-heading" kicker="EXPERIMENT WORKSPACE" title="실험 대시보드" description="과제를 선택해 학습 코드와 실행 이력, 예약 상태를 한곳에서 관리합니다." />
       <section className="experiment-command-surface" aria-label="실험 실행 도구">
         <ExecutionSelect label="과제 선택" value={project} onChange={onProjectChange}><option value="용접 품질 고도화">PRJ000212 · 용접 품질 고도화</option><option value="Surface Zero Defect">PRJ000274 · Surface Zero Defect</option><option value="Cell Quality Intelligence">PRJ000341 · Cell Quality Intelligence</option></ExecutionSelect>
         <div className="experiment-heading-actions"><div className="pipeline-summary"><span><i className="is-running" /><strong>{projectRuns.filter((run) => run.status !== '완료').length}</strong> 실행 중</span><span><i /><strong>{projectSchedules.filter((schedule) => schedule.active).length}</strong> 활성 스케줄</span></div><button type="button" className="experiment-run-button" onClick={onExecute}><Play size={15} fill="currentColor" /> 파이프라인 실행</button></div>
@@ -500,7 +504,7 @@ function PipelineWorkspace({ runs, schedules, view, project, onProjectChange, on
           {projectSchedules.length ? <div className="schedule-list">{projectSchedules.map((schedule) => <article key={schedule.id}><div className="schedule-calendar"><CalendarClock size={19} /><span>{schedule.active ? 'ACTIVE' : 'PAUSED'}</span></div><div><span className="pipeline-project-name">{schedule.project}</span><h3>{schedule.title}</h3><p>{schedule.version} · {schedule.pattern}</p></div><div><span>다음 실행</span><strong>{schedule.nextRun}</strong></div><button type="button">관리 <ChevronDown size={13} /></button></article>)}</div> : <div className="pipeline-empty"><CalendarClock size={26} /><h2>등록된 스케줄이 없습니다</h2><p>파이프라인 실행에서 실행 조건을 설정한 뒤 예약할 수 있습니다.</p></div>}
         </TabsContent>
       </Tabs>
-    </main>
+    </PortalPageFrame>
   );
 }
 
@@ -564,6 +568,9 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
   const [accessRequested, setAccessRequested] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [sdkOpen, setSdkOpen] = useState(false);
+  const [downloadCount, setDownloadCount] = useState(286);
+  const [citationCount, setCitationCount] = useState(47);
+  const [userRating, setUserRating] = useState(0);
   const runNotebookFrameRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -653,6 +660,21 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
 
   const clearFilters = () => {
     setQuery(''); setRoleFilter(null); setPlantFilter(null); setDataFilter(null); setExecutableOnly(false); setScope('전체 코드');
+  };
+
+  const copyAssetUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCitationCount((count) => count + 1);
+      setNotice('코드 자산 URL을 클립보드에 복사했습니다.');
+    } catch {
+      setNotice('URL을 복사하지 못했습니다. 브라우저 주소를 직접 복사해 주세요.');
+    }
+  };
+
+  const downloadAsset = () => {
+    setDownloadCount((count) => count + 1);
+    setNotice(`${selectedAsset.title} ${selectedVersion} 다운로드를 준비합니다.`);
   };
 
   const openAsset = (id: string) => {
@@ -836,19 +858,17 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
   return (
     <SidebarProvider style={{ '--sidebar-width': '248px' } as CSSProperties}>
       <PortalNavigation screen={screen} demoStage={currentDemoStage} />
-      <div className="app-shell code-assets-shell">
+      <PortalWorkspaceSurface>
         <CodeAssetsTopbar />
         <PortalWorkspaceTabs current={currentMenuTab} />
+        {!visionDemoOpen && (screen === 'catalog' || screen === 'detail') && <PortalPrismAtmosphere />}
 
         {currentDemoStage && <VisionMlopsDemo initialStage={currentDemoStage} onStageChange={(stage) => { setCurrentDemoStage(stage); window.history.replaceState(null, '', demoStagePaths[stage]); }} onExit={() => { window.location.href = '/assets/code'; }} />}
 
-        {!visionDemoOpen && screen === 'catalog' && <main className="code-assets-page">
-          <section className="code-page-heading">
-            <div><span className="code-page-kicker">ASSET MANAGEMENT / NOTEBOOK HUB</span><h1>코드 자산</h1><p>전 세계 제조 현장의 Notebook을 찾고, 검증된 조건으로 다시 실행합니다.</p></div>
-            <button className="code-primary-action" type="button" onClick={() => setRegisterOpen(true)}><Plus size={16} /> 코드 등록</button>
-          </section>
+        {!visionDemoOpen && screen === 'catalog' && <PortalPageFrame className="code-assets-page">
+          <PortalPageHeader className="code-page-heading" kicker="ASSET MANAGEMENT / NOTEBOOK HUB" title="코드 자산" description="전 세계 제조 현장의 Notebook을 찾고, 검증된 조건으로 다시 실행합니다." action={<PortalButton variant="primary" onClick={() => setRegisterOpen(true)}><Plus size={16} /> 코드 등록</PortalButton>} />
 
-          <section className="code-search-panel" aria-label="코드 자산 검색">
+          <PortalFilterSurface className="code-search-panel" aria-label="코드 자산 검색">
             <label className="code-search-box">
               <Search size={20} />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="코드명, 설명, 과제, 공장, 공정으로 검색" />
@@ -879,7 +899,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
                 <div><span>데이터 유형</span>{['Image', 'Tabular', 'Time Series', 'Point Cloud'].map((data) => <button type="button" className={dataFilter === data ? 'is-active' : ''} onClick={() => setDataFilter(dataFilter === data ? null : data)} key={data}>{data}</button>)}</div>
               </div>
             )}
-          </section>
+          </PortalFilterSurface>
 
           <section className="code-results-section">
             <header className="code-results-toolbar">
@@ -903,7 +923,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
                     <div className="code-asset-technical"><span>{asset.dataType}</span><span>{asset.framework}</span><small>{asset.id}</small></div>
                     <div className="code-asset-owner"><strong>{asset.owner}</strong><span>{asset.version} · {asset.updated}</span></div>
                     <div className="code-asset-trust"><strong className={asset.verified === '운영 승인' || asset.verified === '재현 확인' ? 'is-verified' : asset.verified === '사전 점검' ? 'is-check' : ''}>{asset.verified}</strong><span>{asset.reuse ? `${asset.reuse}개 공장 활용` : '활용 이력 없음'}</span></div>
-                    <button type="button" className={asset.favorite ? 'code-favorite is-active' : 'code-favorite'} onClick={() => toggleFavorite(asset.id)} aria-label={asset.favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}><Star size={17} fill={asset.favorite ? 'currentColor' : 'none'} /></button>
+                    <button type="button" className={asset.favorite ? 'code-favorite is-active' : 'code-favorite'} onClick={() => toggleFavorite(asset.id)} aria-label={asset.favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}><Bookmark size={17} fill={asset.favorite ? 'currentColor' : 'none'} /></button>
                     <ArrowRight className="code-row-arrow" size={16} />
                   </article>
                 ))}
@@ -912,12 +932,11 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
               <div className="code-empty-state"><Search size={28} /><h2>조건에 맞는 코드가 없습니다</h2><p>검색어나 필터 조건을 바꿔보세요.</p><button type="button" onClick={clearFilters}>전체 조건 초기화</button></div>
             )}
           </section>
-        </main>}
+        </PortalPageFrame>}
 
-        {!visionDemoOpen && screen === 'detail' && <main className="code-detail-page">
+        {!visionDemoOpen && screen === 'detail' && <PortalDetailFrame className="code-detail-page">
           <button className="detail-back" type="button" onClick={openCatalog}><ArrowLeft size={15} /> 코드 자산</button>
           <header className="code-detail-header">
-            <div className="detail-title-mark"><PrizmCodeIcon size={24} /><span>IPYNB</span></div>
             <div className="code-detail-title">
               <span className="detail-project-name">{selectedAsset.project}</span>
               <h1>{selectedAsset.title}</h1>
@@ -925,7 +944,13 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
               <div className="detail-identity-row">
                 <span className={`code-role role-${selectedAsset.role}`}>{selectedAsset.role}</span><TrustStatus status={selectedAsset.verified} />
                 <span className="detail-asset-id">{selectedAsset.id}</span>
-                <span className="detail-meta-divider" />
+                <span className="detail-usage-signals" aria-label="코드 자산 활용 현황">
+                  <span title="조회수"><Eye size={12} /><b>1,248</b></span>
+                  <span title="다운로드 수"><Download size={12} /><b>{downloadCount}</b></span>
+                  <span title="인용·공유 수"><Quote size={12} /><b>{citationCount}</b></span>
+                  <span className="is-rating" title="별점"><Star size={12} fill="currentColor" /><b>4.8</b></span>
+                  <span title="즐겨찾기·구독 수"><Bookmark size={12} /><b>{selectedAsset.favorite ? 94 : 93}</b></span>
+                </span>
                 <label className="detail-version-control">
                   <span>버전</span>
                   <span className="detail-version-native"><select value={selectedVersion} onChange={(event) => { setSelectedVersion(event.target.value); updateCodeDetailUrl(detailTab, event.target.value); setNotice(`${event.target.value} 버전을 불러왔습니다.`); }} aria-label="코드 버전 선택">{getVersionOptions(selectedAsset.version).map((version) => <option value={version} key={version}>{version}{version === selectedAsset.version ? ' · 최신' : ''}</option>)}</select><ChevronDown size={13} /></span>
@@ -933,10 +958,10 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
               </div>
             </div>
             <div className="code-detail-actions">
-              <button type="button" className={selectedAsset.favorite ? 'detail-icon-action is-active' : 'detail-icon-action'} onClick={() => toggleFavorite(selectedAsset.id)} aria-label="즐겨찾기"><Star size={17} fill={selectedAsset.favorite ? 'currentColor' : 'none'} /></button>
-              <button type="button" className="detail-secondary-action"><Download size={15} /> 다운로드</button>
-              <button type="button" className="detail-secondary-action" onClick={() => setSdkOpen(true)}><TerminalSquare size={15} /> SDK 스니펫</button>
-              <button type="button" className="detail-secondary-action" onClick={() => setForkOpen(true)}><GitBranch size={15} /> 이 코드로 시작</button>
+              <button type="button" className={selectedAsset.favorite ? 'detail-icon-action is-active' : 'detail-icon-action'} onClick={() => toggleFavorite(selectedAsset.id)} aria-label="즐겨찾기·구독" title="즐겨찾기·구독"><Bookmark size={17} fill={selectedAsset.favorite ? 'currentColor' : 'none'} /></button>
+              <button type="button" className="detail-icon-action" onClick={copyAssetUrl} aria-label="자산 URL 복사" title="자산 URL 복사"><Link2 size={17} /></button>
+              <button type="button" className="detail-icon-action" onClick={() => setNotice('코드 자산 정보 수정 화면을 준비합니다.')} aria-label="자산 정보 수정" title="자산 정보 수정"><PencilLine size={17} /></button>
+              <button type="button" className="detail-icon-action is-danger" onClick={() => setNotice('코드 자산 사용 중지 요청 화면을 준비합니다.')} aria-label="코드 자산 사용 중지" title="코드 자산 사용 중지"><Power size={17} /></button>
               {selectedAsset.restricted ? <button type="button" className="detail-primary-action" onClick={() => setAccessRequested(true)}><LockKeyhole size={15} /> {accessRequested ? '요청 접수됨' : '열람 권한 요청'}</button> : <button type="button" className="detail-primary-action" onClick={() => setNotice('코드 편집 세션을 준비합니다.')}><PencilLine size={15} /> 코드 편집</button>}
             </div>
           </header>
@@ -954,13 +979,25 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
             <TabsContent value="notebook" className="code-detail-tabcontent">
               <div className="notebook-layout">
                 <NotebookHtmlViewer version={selectedVersion} />
-                <aside className="execution-rail">
-                  <section className="rail-status"><span>실행 준비 상태</span><strong><ShieldCheck size={17} /> 재현 확인 완료</strong><small>2026.09.08 · RUN-26841</small></section>
-                  <section><span className="rail-label">입력 데이터</span><a href="/assets/data?asset=PRJ000212-D-0001"><Database size={15} /><div><strong>용접 비드 결함 데이터셋</strong><small>v13 · 43,180 images</small></div><ArrowUpRight size={13} /></a></section>
-                  <section><span className="rail-label">실행 자원</span><a href="/resources/compute"><Cpu size={15} /><div><strong>ml.a100.20gb</strong><small>CPU 16 · MEM 64GB · NVIDIA A100 20GB</small></div><ArrowUpRight size={13} /></a></section>
-                  <section><span className="rail-label">실행 환경</span><a href="/resources/environments"><Layers3 size={15} /><div><strong>pytorch-2.4-yolo12-py311-cu124</strong><small>Ubuntu 22.04 · Python 3.11 · CUDA 12.4</small></div><ArrowUpRight size={13} /></a></section>
-                  <section><span className="rail-label">출력 자산</span><a href="/assets/models"><Box size={15} /><div><strong>WeldNet 2.4.1</strong><small>Model candidate</small></div><ArrowUpRight size={13} /></a></section>
-                  <button type="button" className="rail-run-button" onClick={() => setExecutionOpen(true)}><Play size={14} fill="currentColor" /> 이 버전으로 실행</button>
+                <aside className="detail-side-stack">
+                  <div className="execution-rail">
+                    <section className="rail-status"><span>실행 준비 상태</span><strong><ShieldCheck size={17} /> 재현 확인 완료</strong><small>2026.09.08 · RUN-26841</small></section>
+                    <section><span className="rail-label">입력 데이터</span><a href="/assets/data?asset=PRJ000212-D-0001"><Database size={15} /><div><strong>용접 비드 결함 데이터셋</strong><small>v13 · 43,180 images</small></div><ArrowUpRight size={13} /></a></section>
+                    <section><span className="rail-label">실행 자원</span><a href="/resources/compute"><Cpu size={15} /><div><strong>ml.a100.20gb</strong><small>CPU 16 · MEM 64GB · NVIDIA A100 20GB</small></div><ArrowUpRight size={13} /></a></section>
+                    <section><span className="rail-label">실행 환경</span><a href="/resources/environments"><Layers3 size={15} /><div><strong>pytorch-2.4-yolo12-py311-cu124</strong><small>Ubuntu 22.04 · Python 3.11 · CUDA 12.4</small></div><ArrowUpRight size={13} /></a></section>
+                    <section><span className="rail-label">출력 자산</span><a href="/assets/models"><Box size={15} /><div><strong>WeldNet 2.4.1</strong><small>Model candidate</small></div><ArrowUpRight size={13} /></a></section>
+                    <button type="button" className="rail-run-button" onClick={() => setExecutionOpen(true)}><Play size={14} fill="currentColor" /> 이 버전으로 실행</button>
+                  </div>
+                  <section className="asset-utility-card">
+                    <header className="asset-utility-heading"><strong>자산 활용</strong><span>코드를 내려받거나 다른 과제에서 재사용합니다.</span></header>
+                    <div className="asset-utility-actions">
+                      <button type="button" onClick={downloadAsset}><Download size={16} /><span>코드 다운로드</span><ArrowRight size={14} /></button>
+                      <button type="button" onClick={() => setSdkOpen(true)}><TerminalSquare size={16} /><span>SDK 스니펫 보기</span><ArrowRight size={14} /></button>
+                      <button type="button" className="is-primary" onClick={() => setForkOpen(true)}><GitFork size={16} /><span>이 코드로 시작</span><ArrowRight size={14} /></button>
+                    </div>
+                    <div className="asset-rating-control"><div><strong>이 코드가 도움이 되었나요?</strong><span>{userRating ? `${userRating}점을 남겼습니다` : '평점을 남겨 재사용 판단을 도와주세요'}</span></div><span>{[1,2,3,4,5].map((score) => <button type="button" className={userRating >= score ? 'is-active' : ''} onClick={() => { setUserRating(score); setNotice(`${score}점 평가를 반영했습니다.`); }} aria-label={`${score}점 주기`} key={score}><Star size={18} fill={userRating >= score ? 'currentColor' : 'none'} /></button>)}</span></div>
+                    <button type="button" className="asset-discussion-action" onClick={() => setNotice('이 코드 자산의 디스커션 18개를 불러옵니다.')}><MessageSquareText size={16} /><span><strong>디스커션</strong><small>질문과 활용 경험을 나눕니다</small></span><b>18</b><ArrowRight size={13} /></button>
+                  </section>
                 </aside>
               </div>
             </TabsContent>
@@ -970,11 +1007,11 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
             <TabsContent value="lineage" className="code-detail-tabcontent"><LineageView /></TabsContent>
             <TabsContent value="access" className="code-detail-tabcontent"><AccessView requested={accessRequested} onRequest={() => setAccessRequested(true)} /></TabsContent>
           </Tabs>}
-        </main>}
+        </PortalDetailFrame>}
 
         {!visionDemoOpen && screen === 'pipeline' && <PipelineWorkspace runs={runRecords} schedules={schedules} view={pipelineView} project={pipelineProject} onProjectChange={(project) => { setPipelineProject(project); const asset = assets.find((item) => item.project === project && item.executable); if (asset) setPipelineCodeAssetId(asset.id); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); params.set('project', project === '용접 품질 고도화' ? 'PRJ000212' : project); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onExecute={openPipelineCodePicker} onViewChange={(value) => { setPipelineView(value); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); value === 'schedules' ? params.set('view', 'schedules') : params.delete('view'); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onOpenRun={(id) => { setActiveRunId(id); navigateWorkspace('run'); }} />}
 
-        {!visionDemoOpen && screen === 'run' && <main className="run-detail-page">
+        {!visionDemoOpen && screen === 'run' && <PortalDetailFrame className="run-detail-page">
           <button className="detail-back" type="button" onClick={() => navigateWorkspace('pipeline')}><ArrowLeft size={15} /> 실험 대시보드</button>
           <header className="run-detail-header">
             <div><span className="code-page-kicker">{activeRun.id} / TRAINING</span><span className="run-project-name">{activeRun.project}</span><h1>{activeRun.title}</h1><p>{activeRun.assetId} · {activeRun.version} · 울산 차체 2라인</p></div>
@@ -1000,11 +1037,11 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
           </div>
           <details className="run-log-details"><summary><span><TerminalSquare size={15} /> Airflow 실행 로그</span><small>기술 진단 정보 · 필요할 때 펼쳐보기</small><ChevronDown size={14} /></summary><pre>{`[${activeRun.requestedAt}] Airflow DAG request accepted · ${activeRun.id}\n[PARAMETERS] Papermill injected 7 parameters\n[PRECHECK] Code and asset permission passed (8/8)\n[ENV] ${activeRun.environment} image prepared\n[RESOURCE] ${activeRun.resource} allocation requested\n[DATA] ${activeRun.data} downloaded\n[TRACKING] MLflow run started · experiment usn-weld-defect\n${activeRun.progress >= 24 ? '[RUNNING] Training started · NVIDIA A100 20GB\n[TRAIN] Epoch 31/80 · mAP50 0.934 · loss 0.147' : '[WAITING] Worker allocation in progress'}\n${activeRun.progress >= 100 ? '[COMPLETE] Epoch 80/80 · mAP50 0.968 · loss 0.082\n[MLFLOW] Parameters, metrics and model artifact logged\n[REGISTER] PRIZM model version created · WeldNet 2.5.0' : '[STREAM] Awaiting next checkpoint...'}`}</pre></details>
           {activeRun.progress >= 100 && <section className="run-result-strip"><div><ShieldCheck size={22} /><span><strong>평가 기준 7개 통과</strong><small>WELD-DETECTION-GATE:v3</small></span></div><div><span>mAP50</span><strong>0.968</strong></div><div><span>생성 모델</span><strong>WeldNet 2.5.0</strong></div><button type="button">모델 자산 확인 <ArrowRight size={14} /></button></section>}
-        </main>}
+        </PortalDetailFrame>}
 
         {notice && <output className="code-notice"><Check size={15} /><span>{notice}</span>{notice.includes('실행') && <button type="button" className="code-notice-link" onClick={() => { setNotice(null); navigateWorkspace('pipeline'); }}>실험 대시보드 보기 <ArrowRight size={13} /></button>}<button type="button" onClick={() => setNotice(null)} aria-label="알림 닫기"><X size={14} /></button></output>}
         <AssetSdkDialog open={sdkOpen} onOpenChange={setSdkOpen} type="code" assetId={selectedAsset.id} version={selectedVersion} title={selectedAsset.title} />
-      </div>
+      </PortalWorkspaceSurface>
 
       <Dialog open={pipelineCodePickerOpen} onOpenChange={setPipelineCodePickerOpen}>
         <DialogContent className="pipeline-code-dialog">

@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import {
   Activity,
   ArrowRight,
@@ -38,12 +41,12 @@ import {
 type NavGroup = { label: string; icon: LucideIcon; badge?: number; active?: boolean; href?: string; children?: { label: string; href: string }[] };
 
 const myWorkGroups: NavGroup[] = [
-  { label: '나의 작업', icon: CheckSquare, badge: 2, children: [{ label: '할 일', href: '/work/tasks' }, { label: '처리 이력', href: '#history' }] },
+  { label: '나의 작업', icon: CheckSquare, badge: 2, children: [{ label: '할 일', href: '/work/tasks' }, { label: '작업 이력', href: '/work/history' }] },
   { label: '즐겨찾기', icon: Star, children: [{ label: '즐겨찾는 과제', href: '#flow' }, { label: '즐겨찾는 자산', href: '#assets' }] },
 ];
 
 const platformGroups: NavGroup[] = [
-  { label: '대시보드', icon: LayoutDashboard, active: true, children: [{ label: '홈', href: '#operations' }, { label: '전사 현황', href: '#contribution' }, { label: '거점 현황', href: '#sites' }, { label: '자원 현황', href: '#execute' }] },
+  { label: '대시보드', icon: LayoutDashboard, active: true, children: [{ label: '홈', href: '/' }, { label: '오늘의 작업', href: '#attention' }, { label: '거점 운영', href: '#sites' }, { label: '파이프라인 현황', href: '#execute' }, { label: '성과 근거', href: '#evidence' }, { label: '재무 기여', href: '#contribution' }] },
   { label: '과제관리', icon: Layers3, href: '/projects' },
   { label: '데이터관리', icon: Database, children: [{ label: '이미지 카탈로그', href: '/image-catalog/review' }, { label: '데이터 연결 매뉴얼', href: '#assets' }] },
   { label: '자산관리', icon: LibraryBig, children: [{ label: '모델 자산', href: '/assets/models' }, { label: '코드 자산', href: '/assets/code' }, { label: '데이터 자산', href: '/assets/data' }, { label: '파이프라인 개발 매뉴얼', href: '#flow' }, { label: 'SDK 매뉴얼', href: '#flow' }] },
@@ -62,7 +65,7 @@ const flowStages = [
   { code: 'TRAIN', label: '학습', value: '08', unit: 'RUNNING', meta: '2 QUEUED' },
   { code: 'EVALUATE', label: '평가', value: '03', unit: 'GATES', meta: '1 DUE' },
   { code: 'REGISTER', label: '등록', value: '76', unit: 'MODELS', meta: '12 CANDIDATE' },
-  { code: 'DEPLOY', label: '배포', value: '64', unit: 'LIVE', meta: '+2 THIS WEEK' },
+  { code: 'DEPLOY', label: '배포', value: '556', unit: 'LIVE', meta: '+7 THIS WEEK' },
   { code: 'OBSERVE', label: '관찰', value: '02', unit: 'SIGNALS', meta: '1 ACTION' },
 ];
 
@@ -99,11 +102,42 @@ const changes = [
 ];
 
 export default function Home() {
+  const [activeDashboardHref, setActiveDashboardHref] = useState('/');
+
+  useEffect(() => {
+    const sectionIds = ['attention', 'sites', 'execute', 'evidence', 'contribution'];
+    let animationFrame = 0;
+    const syncDashboardNavigation = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        const marker = window.scrollY + Math.min(window.innerHeight * 0.34, 320);
+        let nextHref = '/';
+        for (const id of sectionIds) {
+          const section = document.getElementById(id);
+          if (section && marker >= section.offsetTop) nextHref = `#${id}`;
+        }
+        setActiveDashboardHref((current) => current === nextHref ? current : nextHref);
+      });
+    };
+
+    syncDashboardNavigation();
+    window.addEventListener('scroll', syncDashboardNavigation, { passive: true });
+    window.addEventListener('resize', syncDashboardNavigation);
+    window.addEventListener('hashchange', syncDashboardNavigation);
+    return () => {
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener('scroll', syncDashboardNavigation);
+      window.removeEventListener('resize', syncDashboardNavigation);
+      window.removeEventListener('hashchange', syncDashboardNavigation);
+    };
+  }, []);
+
   return (
     <SidebarProvider style={{ '--sidebar-width': '248px' } as React.CSSProperties}>
       <Sidebar className="app-sidebar">
         <SidebarHeader className="sidebar-header">
-          <a href="#top" className="wordmark" aria-label="PRIZM 홈">
+          <a href="/" className="wordmark" aria-label="PRIZM 홈">
             <Image src="/prizm-logo-dark-rainbow.svg" alt="PRIZM" width={920} height={300} priority />
           </a>
         </SidebarHeader>
@@ -140,7 +174,7 @@ export default function Home() {
                     <group.icon /><span>{group.label}</span>{group.badge && <b className="nav-badge urgent">{group.badge}</b>}<ChevronDown className="nav-chevron" />
                   </summary>
                   <div className="nav-submenu">
-                    {group.children?.map((child, index) => { const unavailable = group.label !== '대시보드' && child.href.startsWith('#'); const classes = [group.active && index === 0 ? 'is-current' : '', unavailable ? 'is-unavailable' : ''].filter(Boolean).join(' '); return <Link className={classes} href={child.href} title={unavailable ? '화면 준비 중' : undefined} key={child.label}>{child.label}</Link>; })}
+                    {group.children?.map((child) => { const unavailable = group.label !== '대시보드' && child.href.startsWith('#'); const current = group.active && child.href === activeDashboardHref; const classes = [current ? 'is-current' : '', unavailable ? 'is-unavailable' : ''].filter(Boolean).join(' '); return <Link className={classes} href={child.href} onClick={() => { if (group.active) setActiveDashboardHref(child.href); }} title={unavailable ? '화면 준비 중' : undefined} key={child.label}>{child.label}</Link>; })}
                   </div>
                 </details>
               ))}
@@ -158,7 +192,7 @@ export default function Home() {
         </SidebarFooter>
       </Sidebar>
 
-      <div className="app-shell" id="top">
+      <div className="app-shell home-app-shell" id="top">
         <header className="topbar">
           <div className="topbar-path">
             <SidebarTrigger aria-label="메뉴 열기 또는 닫기" /><strong>홈</strong>
@@ -203,10 +237,21 @@ export default function Home() {
             </div>
             <div className="attention-panel">
               <div className="decision-list">
-                <Link href="/work/tasks?task=TASK-260912-017" className="decision-item decision-warning">
+                <Link href="/work/tasks?task=TASK-260912-017" className="decision-item decision-warning decision-with-evidence">
                   <div className="decision-code"><strong>모델 성능 이상 · 우선</strong><time>13:12까지</time></div>
-                  <h3>Weld Detector 원인 확인</h3>
-                  <p>검출률 88.6% · 울산 차체 2라인 · 제조AI기술개발팀</p>
+                  <div className="decision-copy">
+                    <h3>Weld Detector 원인 확인</h3>
+                    <p>울산 차체 2라인 · 야간 조도 구간</p>
+                    <div className="decision-metric-pair" aria-label="현재 검출률과 운영 기준 비교">
+                      <span><small>현재 검출률</small><strong>88.6%</strong></span>
+                      <i />
+                      <span><small>운영 기준</small><strong>92.0%</strong></span>
+                    </div>
+                  </div>
+                  <figure className="decision-evidence-preview">
+                    <Image src="/weld-inspection-defect-thumb.jpg" alt="미세 크랙 미검출 사례" fill sizes="160px" priority />
+                    <span>AI 미검출</span>
+                  </figure>
                   <span className="decision-link">원인 및 조치 검토 <ArrowRight size={14} /></span>
                 </Link>
                 <a href="#execute" className="decision-item">

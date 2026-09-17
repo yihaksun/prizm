@@ -13,6 +13,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { CodeAssetsTopbar, PortalNavigation } from '@/components/code-assets-workspace';
 import { PortalWorkspaceTabs } from '@/components/portal-workspace-tabs';
 import { ModelEvaluationDetail } from '@/components/vision-mlops-demo';
+import { PortalPageFrame, PortalWorkspaceSurface } from '@/components/portal-page-primitives';
 
 type EvaluationStatus = '평가 대기중' | '평가 완료';
 
@@ -81,7 +82,7 @@ export function ModelEvaluationWorkspace() {
   return (
     <SidebarProvider style={{ '--sidebar-width': '248px' } as CSSProperties}>
       <PortalNavigation screen="catalog" activeNavigation={{ group: '평가관리', child: '모델 평가' }} />
-      <div className="app-shell code-assets-shell">
+      <PortalWorkspaceSurface>
         <CodeAssetsTopbar />
         <PortalWorkspaceTabs current="model-evaluation" />
         {selected ? (
@@ -90,7 +91,7 @@ export function ModelEvaluationWorkspace() {
             onPromote={() => { window.location.href = '/assets/models?asset=PRJ000212-M-0001'; }}
           />
         ) : (
-          <main className="evaluation-workspace-page">
+          <PortalPageFrame className="evaluation-workspace-page">
             <header className="evaluation-workspace-heading">
               <div>
                 <span className="code-page-kicker">MODEL EVALUATION WORKSPACE</span>
@@ -148,9 +149,9 @@ export function ModelEvaluationWorkspace() {
               </div>
               <footer><ShieldCheck size={15} /><span>실험에서 생성된 후보 모델은 자동 평가를 거쳐 이 목록에 등록됩니다.</span></footer>
             </section>
-          </main>
+          </PortalPageFrame>
         )}
-      </div>
+      </PortalWorkspaceSurface>
     </SidebarProvider>
   );
 }
