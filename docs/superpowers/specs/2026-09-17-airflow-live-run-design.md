@@ -1,8 +1,9 @@
 # PRIZM 실제 실행 연동 설계 — Airflow·Papermill·MLflow + 실시간 노트북 모니터링
 
 - 작성일: 2026-09-17
-- 상태: 설계 승인 완료, 사용자 문서 리뷰 대기
-- 관련 저장소: `prizm`(프론트), `prizm-backend`(신규), `~/Workspace/notebook/prototype`(Docker 인프라, git 아님)
+- 상태: 사용자 승인 완료 · 2차 재검토 반영 · 구현 계획 작성 완료
+- 구현 계획: `docs/superpowers/plans/2026-09-17-airflow-live-run.md` (Task 1~20)
+- 관련 저장소: `prizm`(프론트, 로컬 경로 `~/Documents/Codex/2026-09-09/dnp/work/prizm-portal`), `prizm-backend`(신규, 같은 `work` 폴더), `~/Workspace/notebook/prototype`(Docker 인프라, git 아님)
 
 ## 1. 목표
 
@@ -33,17 +34,19 @@ A안을 택한 이유: 이미지·표 같은 풍부한 출력을 포함한 실�
 | 구성요소 | 역할 | 기술 | 포트 |
 |---|---|---|---|
 | `prizm` | 실행 설정·실험 대시보드·실시간 실행 상세 화면 | Next.js(vinext), React 19 | 3000 |
-| `prizm-backend` | 실행 생성, DAG 트리거, 상태 모니터링, SSE 푸시, 실행 이력 저장 | Spring Boot 3.5, Java 21, Gradle Kotlin DSL, H2 | **8081** |
+| `prizm-backend` | 실행 생성, DAG 트리거, 상태 모니터링, SSE 푸시, 실행 이력 저장 | Spring Boot 4.1.1, Java 21, Gradle Kotlin DSL, H2 | **8081** |
 | Airflow | Generic Notebook Executor DAG 실행 (papermill) | Airflow 2.10.2 standalone (Docker) | 8080 |
 | MLflow | run·메트릭·Model Registry | MLflow 2.16.2 (Docker, 아티팩트는 MinIO) | 5050 |
-| AI Hub / MinIO | 코드·데이터셋·모델 자산 저장 | FastAPI + MinIO (Docker) | 8000 / 9000 |
+| AI Hub / MinIO | 코드·데이터셋·모델 자산 저장. AI Hub는 UI 없는 자산 해석 백엔드(Key+Version → S3 경로) | FastAPI + MinIO (Docker) | 8000 / 9000 |
+
+**화면 역할 구분**: AI Hub·MinIO·MLflow는 백엔드로만 쓰고 사용자 화면은 `prizm`이 담당한다. `prizm`의 자산관리 메뉴가 MinIO(AI Hub)를 감싸는 화면이고, **모델 자산** 메뉴가 MLflow UI(Model Registry)를 대신하는 영역이다. 이번 범위에서는 실행 결과를 모델 자산 화면으로 연결하는 진입점까지만 만들고, 두 메뉴의 실데이터 연동은 후속 과제로 둔다(3.3).
 
 ### 3.2 데이터 흐름
 
 1. 사용자가 코드 자산 상세에서 "이 버전으로 실행"을 누르고, 실행 설정 시트에서 파라미터(epochs, batch_size, image_size, seed)를 입력한 뒤 "즉시 실행"을 누른다.
 2. 프론트가 `POST /api/runs`를 호출한다.
 3. 백엔드가 `RUN-xxxxx`를 발급해 `QUEUED`로 저장하고, 자산과 파라미터 이름을 매핑한 뒤 Airflow REST API로 DAG를 트리거하고 `dag_run_id`를 저장한다.
-4. Airflow가 `preflight_check → download_notebook → execute_notebook`을 실행한다. papermill은 `runs/RUN-xxxxx/executed.ipynb`를 셀마다, 그리고 긴 셀 실행 중에도 3초마다 저장한다. 노트북 마지막 셀이 MLflow에 run을 기록하고 Model Registry에 등록한다(`prizm_run_id` 태그 포함).
+4. Airflow가 `preflight_check → download_notebook → execute_notebook`을 실행한다. papermill은 `runs/RUN-xxxxx/executed.ipynb`를 셀 시작·완료마다 저장하고, 긴 셀 실행 중에는 커널 출력 메시지가 올 때 마지막 저장 후 3초 이상 지났으면 저장한다(타이머가 아니므로 학습 셀은 epoch 출력으로 메시지를 보장한다). 노트북 마지막 셀이 MLflow에 run을 기록하고 Model Registry에 등록한다(`prizm_run_id` 태그 포함).
 5. 백엔드 모니터가 2초마다 진행 중인 run에 대해 Airflow 태스크 상태·로그 tail을 조회하고 `executed.ipynb`를 파싱해 변경분만 SSE로 푸시한다. DAG가 성공하면 MLflow에서 태그로 run을 찾아 mAP50과 등록 모델 버전을 저장한다.
 6. 실행 상세 화면이 `GET /api/runs/{id}/stream`을 구독해 단계·진행률·셀·로그·결과를 반영한다.
 
@@ -54,27 +57,29 @@ A안을 택한 이유: 이미지·표 같은 풍부한 출력을 포함한 실�
 - 인증·권한 (실행자는 고정값 `이학선`)
 - 실행 자원·환경 선택의 실제 반영 (값은 기록만, 실제 실행은 CPU 이미지 1종)
 - 파라미터 범위 검증 (타입만 검증, 잘못된 값은 노트북 실행 단계에서 실패로 처리)
+- 모델 자산 화면의 MLflow Model Registry 실데이터 연동, 코드·데이터 자산 화면의 AI Hub/MinIO 실데이터 연동 (후속 과제)
 
 ## 4. 백엔드 설계 (`prizm-backend`)
 
 ### 4.1 기술 스택과 의존성
 
-- Spring Boot 3.5.x, Java 21, Gradle Kotlin DSL(wrapper 포함)
-- `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`, `com.h2database:h2`, `spring-boot-devtools`
-- HTTP 클라이언트: Spring `RestClient`, JSON: Jackson
-- 테스트: `spring-boot-starter-test`(JUnit 5, AssertJ, Mockito), `com.squareup.okhttp3:mockwebserver`
+- Spring Boot 4.1.1, Java 21, Gradle Kotlin DSL(wrapper 9.7.1 포함)
+- `spring-boot-starter-webmvc`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`, `com.h2database:h2`, `spring-boot-devtools`
+- HTTP 클라이언트: Spring `RestClient`, JSON: Jackson 3(`tools.jackson.*`). Boot 4의 `starter-webmvc`에는 `RestClient.Builder` 자동 구성(`spring-boot-restclient`)이 포함되지 않으므로 `config.HttpClientConfig`에서 `RestClient.builder()`로 직접 만든다.
+- 테스트: `spring-boot-starter-webmvc-test`(`spring-boot-starter-test` 포함: JUnit 5, AssertJ, Mockito), Spring `MockRestServiceServer`(외부 의존성 추가 없음), `MockMvcBuilders.standaloneSetup`
 
 ### 4.2 패키지 구조 (`com.prizm.backend`)
 
 | 패키지 | 클래스 | 책임 |
 |---|---|---|
-| `run` | `RunController`, `RunService`, `Run`, `RunRepository`, `RunStatus`, `RunStage`, `CreateRunRequest`, `RunResponse` | 실행 생성·조회 API와 도메인 |
-| `run.monitor` | `RunMonitor`, `RunProgressCalculator`, `RunEventBroadcaster` | 주기적 상태 수집, 단계·진행률 계산, SSE 구독자 관리 |
+| `api` | `ApiExceptionHandler`, `ApiError`, `InvalidRunRequestException`, `RunNotFoundException`, `RunTriggerException` | 오류 응답 규약(400·404·502) |
+| `run` | `RunController`, `RunService`, `Run`, `RunRepository`, `RunIdGenerator`, `RunStatus`, `RunStage`, `CreateRunRequest`, `RunResponse` | 실행 생성·조회 API와 도메인 |
+| `run.monitor` | `RunMonitor`, `RunProgressCalculator`, `RunProgress`, `RunSnapshotStore`, `RunEventBroadcaster`, `RunEvents`, `NotebookPayload`, `LogPayload` | 주기적 상태 수집, 단계·진행률 계산, 노트북·로그 스냅샷 캐시, SSE 구독자 관리 |
 | `airflow` | `AirflowClient`, `AirflowTaskState` | DAG 트리거, dagRun·taskInstance 조회, 태스크 로그 조회 |
 | `mlflow` | `MlflowClient`, `MlflowRunResult` | 실험 조회, 태그 기반 run 검색, run_id 기반 모델 버전 검색 |
 | `notebook` | `NotebookSnapshotReader`, `NotebookCell`, `CellOutput` | `executed.ipynb` 파싱 |
 | `asset` | `CodeAssetCatalog`, `CodeAssetProperties` | 자산 ID·버전 → 코드 키·버전, 파라미터 이름 매핑 |
-| `config` | `PrizmProperties`, `WebConfig` | 외부 서비스 주소·경로 설정, CORS, 스케줄링 활성화 |
+| `config` | `PrizmProperties`, `WebConfig`, `HttpClientConfig`, `SchedulingConfig` | 외부 서비스 주소·경로 설정, CORS, `RestClient` 생성, 스케줄링 활성화(`prizm.monitor.enabled`) |
 
 ### 4.3 API
 
@@ -85,7 +90,7 @@ A안을 택한 이유: 이미지·표 같은 풍부한 출력을 포함한 실�
 | GET | `/api/runs/{id}` | 200 `RunResponse` / 404 | 단건 조회 |
 | GET | `/api/runs/{id}/notebook` | 200 `{ "cells": NotebookCell[] }` / 404 | 최신 노트북 스냅샷 |
 | GET | `/api/runs/{id}/log` | 200 `{ "lines": string[] }` / 404 | `execute_notebook` 태스크 로그 끝 200줄 |
-| GET | `/api/runs/{id}/stream` | `text/event-stream` / 404 | 연결 즉시 `run`·`notebook`·`log` 전체 스냅샷, 이후 변경분 푸시 |
+| GET | `/api/runs/{id}/stream` | `text/event-stream` / 404 | 연결 즉시 `notebook`·`log`·`run` 순서로 전체 스냅샷, 이후 변경분 푸시 |
 
 **요청 예시 — `POST /api/runs`**
 
@@ -152,6 +157,7 @@ A안을 택한 이유: 이미지·표 같은 풍부한 출력을 포함한 실�
 
 - `cellType`: `code` | `markdown`
 - `status`: 셀 메타데이터 `papermill.status` 값(`pending` | `running` | `completed` | `failed`)을 그대로 사용한다. 마크다운 셀은 항상 `completed`.
+- 제외: papermill이 실패 시 맨 앞과 오류 셀 앞에 넣는 `papermill-error-cell-tag` 태그의 마크다운 셀(HTML 문자열)은 반환하지 않는다. `index`는 제외 후 목록 기준 0부터.
 - `outputs.type` 변환 규칙: `stream` → `stream`, `execute_result`·`display_data`의 `image/png` → `image`, 그 외 `text/plain` → `text`, `error` → `error`. traceback의 ANSI 색상 코드는 제거한다.
 
 **SSE 이벤트**
@@ -162,13 +168,13 @@ A안을 택한 이유: 이미지·표 같은 풍부한 출력을 포함한 실�
 | `notebook` | `{ "cells": NotebookCell[] }` |
 | `log` | `{ "lines": string[] }` |
 
-emitter 타임아웃 30분, 15초마다 heartbeat 주석(`: ping`), 완료·오류·타임아웃 시 즉시 구독자 목록에서 제거.
+emitter 타임아웃 30분, 15초마다 heartbeat 주석(`: ping`), 완료·오류·타임아웃 시 즉시 구독자 목록에서 제거. 초기 스냅샷과 모니터 푸시 모두 `run` 이벤트를 마지막에 보낸다 — 프론트는 종료 상태의 `run`을 받으면 연결을 닫으므로, 그보다 먼저 셀·로그를 받아야 완료된 실행도 노트북이 표시된다.
 
 ### 4.4 `Run` 엔티티
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `id` | String (PK) | `RUN-` + DB 시퀀스(27000부터) |
+| `id` | String (PK) | `RUN-` + DB 시퀀스(27000부터). `RunIdGenerator`가 기동 시 `CREATE SEQUENCE IF NOT EXISTS run_id_seq START WITH 27000` 실행 후 `NEXT VALUE FOR run_id_seq` 사용 |
 | `assetId`, `assetVersion` | String | 프론트 자산 식별자 |
 | `codeKey`, `codeVersion` | String | AI Hub 코드 자산 키·버전 |
 | `parameters` | String(JSON) | 화면에서 입력한 원래 이름의 파라미터 |
@@ -195,10 +201,12 @@ prizm:
       code-version: v2
       parameter-names:
         epochs: epochs
-        batch_size: batch
-        image_size: imgsz
+        "[batch_size]": batch
+        "[image_size]": imgsz
         seed: seed
 ```
+
+맵 키에 `_`가 있으면 Spring Boot 바인딩이 문자를 제거하므로(`batch_size` → `batchsize`) 대괄호 표기를 쓴다. 컨텍스트 로드 테스트에서 실제 바인딩 결과를 검증한다.
 
 매핑에 없는 `assetId`+`version` 조합은 400. Airflow에 보내는 `extra_params`는 매핑된 이름으로 변환한 값이다.
 
@@ -234,7 +242,7 @@ prizm:
 | MLflow 결과 저장 완료 | `SUCCEEDED` | `DONE` | 100 |
 | 어느 태스크든 `failed`/`upstream_failed` 또는 dagRun failed | `FAILED` | 실패 직전 단계 유지 | 실패 직전 값 유지 |
 
-실패 시 `errorMessage` = `"{task_id} 실패: {로그 마지막 비어있지 않은 줄}"`.
+실패 시 `errorMessage` = `"{task_id} 실패: {오류 줄}"`. 오류 줄은 해당 태스크 로그에서 `(\w+(Error|Exception)): .+` 패턴에 맞는 마지막 줄의 매치 부분, 없으면 마지막 비어있지 않은 줄. 로그가 없으면 `"{task_id} 실패"`.
 
 ### 4.8 MLflow 연동
 
@@ -279,6 +287,8 @@ prizm:
   runs-dir: ${user.home}/Workspace/notebook/prototype/runs
   cors:
     allowed-origins: http://localhost:3000
+  monitor:
+    enabled: true   # 테스트에서는 false — 스케줄러(모니터·heartbeat)를 끈다
 ```
 
 ## 5. 인프라 변경 (`~/Workspace/notebook/prototype`)
@@ -287,7 +297,7 @@ prizm:
 
 ### 5.1 `docker-compose.yml`
 
-`airflow` 서비스 `volumes`에 `./runs:/opt/airflow/mlops_run` 추가. DAG는 이미 볼륨 마운트이므로 이미지 재빌드 없이 `airflow` 컨테이너만 재생성한다.
+`airflow` 서비스 `volumes`에 `./runs:/opt/airflow/mlops_run` 추가. DAG는 이미 볼륨 마운트이므로 이미지 재빌드 없이 `airflow` 컨테이너만 재생성한다. 호스트에 `prototype/runs`를 먼저 만든다. DAG의 `RUN_ROOT`가 이미 `/opt/airflow/mlops_run`이므로 `prizm_run_id`가 없는 기존 실행 폴더도 이 호스트 폴더에 쌓인다(기존에는 컨테이너 안에만 있었음).
 
 ### 5.2 DAG `mlops_notebook_executor.py`
 
@@ -301,11 +311,11 @@ prizm:
 v1(`notebooks/demo_yolov8_training.ipynb`)은 수정하지 않고 `notebooks/demo_yolov8_training_v2.ipynb`를 새로 만든다.
 
 - parameters 셀 추가: `prizm_run_id = ""`, `mlflow_experiment = "prizm-weld-training"`, `registered_model_name = "weld-bead-defect-detector"`. 기본값 `epochs = 3`, `imgsz = 320`, `batch = 4`, `seed = 42`.
-- 학습 셀: ultralytics 콜백 `on_fit_epoch_end`에서 epoch마다 한 줄 출력 — `epoch {n}/{epochs} · box_loss {x:.3f} · cls_loss {y:.3f} · mAP50 {z:.3f}`. `verbose=False` 유지.
+- 학습 셀: 맨 앞에 `if epochs < 1: raise ValueError("epochs는 1 이상이어야 합니다")` 가드 — ultralytics는 `epochs=0`을 100 epoch으로 바꿔 실행하므로 노트북 계약에서 먼저 막는다. ultralytics 콜백 `on_fit_epoch_end`에서 epoch마다 한 줄 출력 — `epoch {n}/{epochs} · box_loss {x:.3f} · cls_loss {y:.3f} · mAP50 {z:.3f}`. `verbose=False` 유지.
 - 마지막 셀:
   - `mlflow.set_experiment(mlflow_experiment)`, `mlflow.start_run(run_name=f"{prizm_run_id or 'manual'}-yolov8-training")`
   - `mlflow.set_tag("prizm_run_id", prizm_run_id)`, 하이퍼파라미터 `log_params`, `log_metric("mAP50", map50)`
-  - `best.pt`를 감싼 `mlflow.pyfunc.PythonModel`로 `mlflow.pyfunc.log_model(artifact_path="model", python_model=..., artifacts={"weights": best_weight}, registered_model_name=registered_model_name)` → Model Registry 새 버전
+  - `best.pt`를 감싼 `mlflow.pyfunc.PythonModel`로 `mlflow.pyfunc.log_model(artifact_path="model", python_model=..., artifacts={"weights": best_weight}, pip_requirements=["mlflow==2.16.2", "ultralytics==8.3.28"], registered_model_name=registered_model_name)` → Model Registry 새 버전. `pip_requirements`를 명시해 의존성 자동 추론(느리고 경고가 많음)을 건너뛴다.
   - 기존 `mlops.model.upload(model_key, best_weight)` 및 태그 유지
 - 등록: 1회성 스크립트 `seed/register_notebook_v2.py`로 AI Hub에 `v2` 등록. `demo.door_defect` 데이터셋·`demo.yolov8n_base` 가중치가 없으면 기존 `seed` 먼저 실행.
 
@@ -321,7 +331,7 @@ v1(`notebooks/demo_yolov8_training.ipynb`)은 수정하지 않고 `notebooks/dem
 
 | 파일 | 역할 |
 |---|---|
-| `lib/prizm-api.ts` | 백엔드 타입(`Run`, `NotebookCell`, `CellOutput`)과 `createRun`, `listRuns`. 주소는 `NEXT_PUBLIC_PRIZM_API_BASE`, 기본 `http://localhost:8081` |
+| `lib/prizm-api.ts` | 백엔드 타입(`Run`, `NotebookCell`, `CellOutput`)과 `createRun`, `listRuns`. 주소는 `NEXT_PUBLIC_PRIZM_API_BASE`, 기본 `http://localhost:8081`. vinext는 실제로 정의된 `NEXT_PUBLIC_*`만 번들에 인라인하므로, 미정의 시 브라우저의 `process` 참조 오류를 `try/catch`로 흡수하고 기본값을 쓴다(`.env*`는 `.gitignore` 대상이라 기본값 파일을 커밋하지 않는다) |
 | `hooks/use-run-stream.ts` | `EventSource`로 `/api/runs/{id}/stream` 구독 → `{ run, cells, log, connected }`. run이 `SUCCEEDED`/`FAILED`가 되면 연결 종료 |
 | `components/live-notebook.tsx` | 셀 렌더러 |
 | `components/live-run-detail.tsx` | 실제 실행 상세 화면(진행 카드·노트북·실행 조건·로그·결과) |
@@ -341,6 +351,8 @@ v1(`notebooks/demo_yolov8_training.ipynb`)은 수정하지 않고 `notebooks/dem
 
 - `RunRecord`에 `source: 'mock' | 'live'` 추가, 상태 유니온에 `'실패'` 추가.
 - 화면 진입 시 `listRuns()` 결과를 기존 mock 목록 앞에 병합. 진행 중인 live run이 있을 때만 5초마다 재조회.
+- 기존 mock 진행 시뮬레이션 타이머(2.4초마다 progress +7)는 `source === 'mock'`인 run에만 적용한다. 그렇지 않으면 live run의 실제 진행률을 덮어쓴다.
+- 목록 상태 배지 클래스는 `state-${status}`이므로 `state-실패` 스타일을 추가한다.
 - 백엔드 연결 실패 시 mock 목록만 표시.
 - 상태 매핑: `QUEUED` → 요청 접수, `RUNNING`+`PREPARING`/`DATA` → 자원 준비, `RUNNING`+`TRAINING`/`REGISTERING` → 실행 중, `SUCCEEDED` → 완료, `FAILED` → 실패(빨간 배지).
 
@@ -356,7 +368,7 @@ v1(`notebooks/demo_yolov8_training.ipynb`)은 수정하지 않고 `notebooks/dem
   - 실행 중 셀로 자동 스크롤. 사용자가 위로 스크롤하면 자동 스크롤 중지, 맨 아래로 돌아오면 재개.
 - 실행 조건 패널: 주입된 파라미터, `dagRunId`, 기록된 실행 자원·환경, 실행자.
 - Airflow 실행 로그(기존 접이식): 실제 로그 줄.
-- 결과 스트립(`SUCCEEDED`): mAP50, `weld-bead-defect-detector v{N}`, "MLflow에서 보기" → `http://localhost:5050/#/models/weld-bead-defect-detector/versions/{N}` 새 탭. 등록 정보가 없으면 경고 문구.
+- 결과 스트립(`SUCCEEDED`): mAP50, `weld-bead-defect-detector v{N}`, 주 버튼 "모델 자산 확인" → 포털 `/assets/models`(모델 자산 = MLflow UI 영역). 보조 링크 "MLflow 원본" → `http://localhost:5050/#/models/weld-bead-defect-detector/versions/{N}` 새 탭(모델 자산 화면이 Registry와 실연동되기 전까지 등록 사실을 확인하는 용도). 등록 정보가 없으면 경고 문구.
 - "실행 중지", "동일 조건으로 다시 실행"은 live run에서 비활성화.
 
 ### 6.5 스타일
@@ -384,11 +396,12 @@ v1(`notebooks/demo_yolov8_training.ipynb`)은 수정하지 않고 `notebooks/dem
 | 테스트 | 검증 내용 |
 |---|---|
 | `CodeAssetCatalogTest` | 매핑 조회, 파라미터 이름 변환, 미등록 자산 예외 |
-| `NotebookSnapshotReaderTest` | papermill 형식 fixture(실행 중·완료·오류 셀·불완전 JSON) → 셀 상태, 출력 변환, ANSI 제거, 파싱 실패 처리 |
+| `NotebookSnapshotReaderTest` | papermill 형식 fixture(실행 중·완료·오류 셀·불완전 JSON) → 셀 상태, 출력 변환, ANSI 제거, `papermill-error-cell-tag` 셀 제외, 파싱 실패 처리 |
 | `RunProgressCalculatorTest` | 4.7 표의 모든 행 |
-| `AirflowClientTest` | MockWebServer: basic auth 헤더, 트리거 요청 JSON, 상태·로그 응답 파싱, 5xx·연결 실패 예외 |
-| `MlflowClientTest` | MockWebServer: 실험 조회, run 검색 필터 문자열, 모델 버전 파싱, 결과 없음 |
-| `RunControllerTest` | `@WebMvcTest`: 201·400·404·502 응답 계약 |
+| `AirflowClientTest` | `MockRestServiceServer`: basic auth 헤더, 트리거 요청 JSON, 상태·로그 응답 파싱, 연결 실패 예외 |
+| `MlflowClientTest` | `MockRestServiceServer`: 실험 조회, run 검색 필터 문자열, 모델 버전 파싱, 결과 없음 |
+| `RunControllerTest` | `MockMvcBuilders.standaloneSetup`: 201·400·404·502 응답 계약 |
+| `RunEventBroadcasterTest` | 구독자 등록·완료 시 정리 |
 | `RunServiceTest` | 생성 시 매핑·저장·트리거, 트리거 실패 시 `FAILED` 저장 |
 | `RunMonitorTest` | 가짜 클라이언트로 상태 전이, 변경 시에만 브로드캐스트, run별 예외 격리, MLflow 재시도 한도 |
 
@@ -407,7 +420,7 @@ CLI로 `prizm_run_id`를 포함해 DAG를 트리거하고, 학습 셀 실행 중
 3. 입력한 epochs 값이 `injected-parameters` 셀과 MLflow run params에 동일하게 기록된다.
 4. 완료 후 MLflow Model Registry에 `weld-bead-defect-detector` 새 버전이 생기고, 화면 결과 스트립에 같은 버전과 mAP50이 표시된다.
 5. 백엔드를 재시작해도 실험 대시보드에 실행 이력과 결과가 유지된다.
-6. `curl`로 `epochs: 0`을 담아 `POST /api/runs`를 호출하면 노트북 실행 단계에서 실패하고, 화면에 `FAILED`와 오류 셀이 표시된다.
+6. `curl`로 `epochs: 0`을 담아 `POST /api/runs`를 호출하면 학습 셀의 `epochs` 가드에서 `ValueError`로 실패하고, 화면에 `FAILED`와 오류 셀이 표시된다.
 
 ## 9. 저장소·브랜치·되돌리기
 
@@ -418,9 +431,42 @@ CLI로 `prizm_run_id`를 포함해 DAG를 트리거하고, 학습 셀 실행 중
 | prototype 인프라 | git 아님. 수정 전 원본을 `prototype/.backup-2026-09-17/`에 복사 | 백업 파일로 덮어쓰기 |
 | 로컬 도구 | SDKMAN + Temurin JDK 21 (`~/.sdkman`) | `sdk uninstall java <version>` |
 
-## 10. 참고 파일
+## 10. 구현 계획 작성 중 반영한 변경 사항
 
-- 실행 설정 시트·실행 상세: `prizm/components/code-assets-workspace.tsx` (`beginRun` 740행, 실행 상세 1014행, 실행 설정 시트 1058행)
+| 항목 | 기존 설계 | 변경 | 이유 |
+|---|---|---|---|
+| Spring Boot | 3.5 | **4.1.1** | Spring Initializr가 더 이상 3.5를 제공하지 않음(현재 GA 4.0.8·4.1.1). Java 21 지원 유지 |
+| JSON | Jackson | Jackson 3(`tools.jackson.*`) | Boot 4 기본값 |
+| HTTP 클라이언트 테스트 | OkHttp MockWebServer | Spring `MockRestServiceServer` | 외부 의존성 없이 `RestClient.Builder`에 바로 연결 가능 |
+| 컨트롤러 테스트 | `@WebMvcTest` | `MockMvcBuilders.standaloneSetup` | Boot 4 테스트 슬라이스 패키지 이동과 무관하게 동작 |
+| 예외 클래스 위치 | 미정 | `api` 패키지 | `asset`·`run`·`airflow` 사이 순환 의존 방지 |
+| SSE 이벤트 순서 | `run`·`notebook`·`log` | `notebook`·`log`·`run` | 종료 상태 수신 시 연결을 닫기 전에 셀·로그를 받기 위함 |
+| 노트북 v2 학습 셀 | 가드 없음 | `epochs < 1`이면 `ValueError` | ultralytics가 `epochs=0`을 100으로 치환 → 완료 기준 6을 결정적으로 만들기 위함 |
+| 노트북 이미지 출력 렌더 | `<img>` | `next/image`(`unoptimized`) | 프로젝트 oxlint `nextjs` 규칙이 `<img>`를 오류로 처리 |
+
+### 10.1 2차 재검토에서 반영한 변경 사항 (소스·실측 확인)
+
+| 항목 | 변경 | 근거 |
+|---|---|---|
+| papermill 저장 주기 표현 | "3초마다" → "출력 메시지 수신 시 마지막 저장 후 3초 이상이면" | papermill 2.6.0 `PapermillNotebookClient.process_message`에서만 `autosave_cell()` 호출 |
+| papermill 오류 안내 셀 | `papermill-error-cell-tag` 셀을 리더에서 제외 | papermill 2.6.0 `execute.py`가 실패 시 HTML 마크다운 셀 2개를 삽입 |
+| `RestClient` 생성 | `HttpClientConfig`에서 직접 생성 | Boot 4.1.1 `spring-boot-starter-webmvc` POM에 `spring-boot-restclient` 없음 |
+| 테스트 의존성 | `spring-boot-starter-webmvc-test` | Initializr(Boot 4.1.1) 생성 결과 |
+| Run ID 발급 | `RunIdGenerator` + H2 시퀀스 | 문자열 PK에 JPA 시퀀스 생성기를 쓸 수 없음 |
+| 스케줄러 토글 | `prizm.monitor.enabled` | 컨텍스트 로드 테스트에서 실제 Airflow 호출 방지 |
+| MLflow 모델 로깅 | `pip_requirements` 명시 | 의존성 자동 추론 시간·경고 제거 |
+| 프론트 mock 타이머 | mock run에만 적용, `state-실패` 스타일 추가 | 기존 타이머가 `'완료'`가 아닌 모든 run의 progress를 올림(`code-assets-workspace.tsx` 611~622행) |
+| 인프라 `runs` 폴더 | 호스트에 먼저 생성, 기존 실행 폴더도 함께 쌓임을 명시 | DAG `RUN_ROOT = /opt/airflow/mlops_run` |
+| 화면 역할 구분 | AI Hub는 UI 없는 백엔드, 포털 자산관리 = MinIO 래핑 화면, 모델 자산 = MLflow UI 영역으로 명시. 결과 스트립 주 버튼을 "모델 자산 확인"으로, MLflow 원본 링크는 보조로 | 사용자 확인(2026-09-17) |
+| 파라미터 매핑 YAML 키 | `"[batch_size]"`, `"[image_size]"` 대괄호 표기 | Spring Boot 맵 바인딩이 `_`를 제거 |
+| 502 예외 | `api.RunTriggerException` 추가 | 트리거 실패를 400·404와 구분 |
+| 프론트 API 주소 | `process.env` 접근을 `try/catch`로 감싸 기본값 사용 | vinext `dotenv.js`: 존재하는 `NEXT_PUBLIC_*`만 `define`으로 인라인. `.env*`는 git 무시 대상 |
+| 실패 메시지 추출 | 로그의 마지막 `...Error: ...`/`...Exception: ...` 줄 우선, 없으면 마지막 비어있지 않은 줄 | Airflow 태스크 로그 마지막 줄은 보통 `Task exited with return code 1` 같은 운영 로그 |
+| 프론트 린트 기준 | 신규 파일 오류 0건, `code-assets-workspace.tsx`는 기존 오류(14줄) 증가 없음 | 저장소 전체 `oxlint`에 기존 오류 존재. `tsc --noEmit`은 현재 통과 |
+
+## 11. 참고 파일
+
+- 실행 설정 시트·실행 상세: `prizm-portal/components/code-assets-workspace.tsx` (`RunRecord` 127행, mock 진행 타이머 611행, `beginRun` 740행, 실행 상세 1014행, 실행 설정 시트 1058행)
 - Generic DAG: `prototype/airflow/dags/mlops_notebook_executor.py`
 - 노트북 v1: `prototype/notebooks/demo_yolov8_training.ipynb`
 - 기존 Airflow·MLflow 연동 참고: `prototype/portal/app.py` (`/api/trigger`, `/api/run_status`, `/api/run_log`, `/api/history`)
