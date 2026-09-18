@@ -1722,3 +1722,18 @@
 .live-notebook-markdown .live-notebook-heading.level-1 { font-size: 1.05rem; }
 .live-notebook-markdown .live-notebook-heading.level-2 { font-size: .95rem; }
 .live-notebook-markdown .live-notebook-heading.level-3 { font-size: .86rem; }
+
+/* ── Live run detail ───────────────────────────────────────────── */
+.run-live-dot.is-failed { background: #d14343; animation: none; }
+.run-stage-track span.is-failed { color: #b42318; font-weight: 620; }
+.live-run-progress.is-failed { border-color: #e5a3a3; }
+.live-run-progress.is-failed .run-large-progress i { background: #d14343; }
+.run-header-actions button:disabled { cursor: not-allowed; opacity: .5; }
+.live-run-result-actions { display: flex; align-items: center; gap: .6rem; }
+.live-run-result-actions a { display: inline-flex; align-items: center; gap: .3rem; font-size: .76rem; font-weight: 620; white-space: nowrap; }
+.live-run-result-actions a:first-child { height: 2.3rem; padding: 0 .8rem; color: white; background: var(--hyundai-blue); border-radius: .35rem; }
+.live-run-result-actions a:last-child:not(:first-child) { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.pipeline-status.state-실패 { color: #b42318; }
+.pipeline-status.state-실패 i { background: #d14343; }
+.execution-sheet-footer:has(.execution-run-error) { flex-wrap: wrap !important; }
+.execution-run-error { flex-basis: 100%; margin: 0; padding: .55rem .75rem; color: #b42318; background: #fdf3f3; border: 1px solid #f1c4c4; border-radius: .35rem; font-size: .76rem; }
