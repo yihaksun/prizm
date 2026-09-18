@@ -1691,3 +1691,34 @@
   .task-detail-header dl { grid-template-columns:1fr; }
   .task-detail-header dl div { padding:.65rem 0; border-top:1px solid var(--line); border-left:0; }
 }
+
+/* ── Live notebook (실제 Airflow 실행 스냅샷) ───────────────────────── */
+.live-notebook { position: relative; height: min(72vh, 54rem); overflow-y: auto; padding: 1rem; display: grid; align-content: start; gap: .75rem; background: #fbfbfa; }
+.live-notebook-empty { padding: 3rem 1rem; color: var(--muted); font-size: .8rem; text-align: center; }
+.live-notebook-cell { min-width: 0; background: white; border: 1px solid var(--line); border-radius: .5rem; overflow: hidden; }
+.live-notebook-cell.is-markdown { padding: .75rem 1rem; background: transparent; border-color: transparent; }
+.live-notebook-cell.is-running { border-color: var(--active-blue); box-shadow: 0 0 0 3px rgba(0,170,210,.12); }
+.live-notebook-cell.is-failed { border-color: #e5a3a3; box-shadow: 0 0 0 3px rgba(209,67,67,.1); }
+.live-notebook-cell.is-pending { opacity: .62; }
+.live-notebook-cell > header { min-height: 2.1rem; padding: .35rem .75rem; display: flex; align-items: center; gap: .5rem; background: #f6f6f4; border-bottom: 1px solid var(--line); }
+.live-notebook-count { color: #6c7f8b; font: 600 .72rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.live-notebook-param-badge { padding: .15rem .45rem; color: var(--hyundai-blue); background: rgba(0,44,95,.07); border-radius: 999px; font-size: .68rem; font-weight: 620; }
+.live-notebook-status { margin-left: auto; padding: .15rem .45rem; border-radius: 999px; background: #eef0f2; color: #5c6b75; font-size: .68rem; font-weight: 620; }
+.live-notebook-status.is-completed { background: #e7f4ef; color: #357865; }
+.live-notebook-status.is-running { background: rgba(0,170,210,.12); color: #006d88; }
+.live-notebook-status.is-failed { background: #fbeaea; color: #b42318; }
+.live-notebook-source,
+.live-notebook-stream,
+.live-notebook-text,
+.live-notebook-error { margin: 0; padding: .7rem .9rem; overflow-x: auto; white-space: pre-wrap; word-break: break-word; font: .74rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.live-notebook-source { color: var(--ink); }
+.live-notebook-outputs { border-top: 1px dashed var(--line); }
+.live-notebook-stream { color: #33424b; }
+.live-notebook-stream.is-stderr { color: #7a5b1f; background: #fffaf0; }
+.live-notebook-error { color: #b42318; background: #fdf3f3; }
+.live-notebook-image { width: 100%; max-width: 40rem; height: auto; padding: .7rem .9rem; display: block; }
+.live-notebook-markdown p { margin: 0 0 .35rem; color: var(--muted); font-size: .8rem; line-height: 1.6; }
+.live-notebook-markdown .live-notebook-heading { color: var(--ink); font-weight: 650; }
+.live-notebook-markdown .live-notebook-heading.level-1 { font-size: 1.05rem; }
+.live-notebook-markdown .live-notebook-heading.level-2 { font-size: .95rem; }
+.live-notebook-markdown .live-notebook-heading.level-3 { font-size: .86rem; }
