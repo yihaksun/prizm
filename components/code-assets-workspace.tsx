@@ -126,7 +126,7 @@ type CodeAsset = {
 type WorkspaceScreen = 'catalog' | 'detail' | 'pipeline' | 'run';
 type WorkspaceTask = 'data' | 'detail' | 'run';
 
-type RunRecord = {
+type RunRecordBase = {
   id: string;
   assetId: string;
   project: string;
@@ -139,9 +139,12 @@ type RunRecord = {
   mode: '즉시 실행' | '예약 실행';
   requestedAt: string;
   progress: number;
-  source: 'mock' | 'live';
-  live?: Run;
 };
+
+type RunRecord = RunRecordBase & (
+  | { source: 'mock'; live?: never }
+  | { source: 'live'; live: Run }
+);
 
 type RunParameterName = keyof RunParameters;
 
@@ -615,7 +618,14 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
   const [downloadCount, setDownloadCount] = useState(286);
   const [citationCount, setCitationCount] = useState(47);
   const [userRating, setUserRating] = useState(0);
+  const [runsFetched, setRunsFetched] = useState(false);
   const runNotebookFrameRef = useRef<HTMLIFrameElement>(null);
+
+  const selectedAsset = assets.find((asset) => asset.id === selectedAssetId) ?? assets[0];
+  // URL/deep-link(?run=)로 지정된 실행이 아직 runRecords에 없을 수 있다. 이 경우 mock으로 대체하지 않고
+  // undefined로 두어 화면에서 로딩/찾을 수 없음 상태를 명시한다 (findings: 가짜 결과 노출 방지).
+  const activeRun = runRecords.find((run) => run.id === activeRunId);
+  const activeRunResolved = Boolean(activeRun);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -664,15 +674,20 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
           if (cancelled) return;
           setRunRecords((current) => [...runs.map((run) => toRunRecord(run, initialAssets)), ...current.filter((record) => record.source === 'mock')]);
         })
-        .catch(() => undefined); // 실행 서버가 꺼져 있으면 mock 목록만 보여준다
+        .catch(() => undefined) // 실행 서버가 꺼져 있으면 mock 목록만 보여준다
+        .finally(() => {
+          if (!cancelled) setRunsFetched(true);
+        });
     };
     load();
-    const timer = hasActiveLiveRuns ? window.setInterval(load, 5000) : undefined;
+    // URL/deep-link로 진입한 실행이 아직 목록에 없으면(활성 live run이 없어도) 다음 poll에서 찾도록 계속 조회한다.
+    const needsPolling = hasActiveLiveRuns || (screen === 'run' && !activeRunResolved);
+    const timer = needsPolling ? window.setInterval(load, 5000) : undefined;
     return () => {
       cancelled = true;
       if (timer !== undefined) window.clearInterval(timer);
     };
-  }, [hasActiveLiveRuns]);
+  }, [hasActiveLiveRuns, screen, activeRunResolved]);
 
   useEffect(() => {
     if (!hasActiveMockRuns) return;
@@ -685,9 +700,6 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
     }, 2400);
     return () => window.clearInterval(timer);
   }, [hasActiveMockRuns]);
-
-  const selectedAsset = assets.find((asset) => asset.id === selectedAssetId) ?? assets[0];
-  const activeRun = runRecords.find((run) => run.id === activeRunId) ?? runRecords[0];
 
   const focusRunNotebookOutput = () => {
     const frame = runNotebookFrameRef.current;
@@ -1089,7 +1101,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
 
         {!visionDemoOpen && screen === 'pipeline' && <PipelineWorkspace runs={runRecords} schedules={schedules} view={pipelineView} project={pipelineProject} onProjectChange={(project) => { setPipelineProject(project); const asset = assets.find((item) => item.project === project && item.executable); if (asset) setPipelineCodeAssetId(asset.id); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); params.set('project', project === '용접 품질 고도화' ? 'PRJ000212' : project); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onExecute={openPipelineCodePicker} onViewChange={(value) => { setPipelineView(value); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); value === 'schedules' ? params.set('view', 'schedules') : params.delete('view'); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onOpenRun={(id) => { setActiveRunId(id); navigateWorkspace('run', id); }} />}
 
-        {!visionDemoOpen && screen === 'run' && <PortalDetailFrame className="run-detail-page">{activeRun.live ? <LiveRunDetail key={activeRun.id} run={activeRun.live} title={activeRun.title} project={activeRun.project} onBack={() => navigateWorkspace('pipeline')} /> : <>
+        {!visionDemoOpen && screen === 'run' && <PortalDetailFrame className="run-detail-page">{!activeRun ? <div className="run-detail-loading"><button className="detail-back" type="button" onClick={() => navigateWorkspace('pipeline')}><ArrowLeft size={15} /> 실험 대시보드</button><p>{runsFetched ? `해당 실행을 찾을 수 없습니다. (${activeRunId})` : '실행 정보를 불러오는 중입니다...'}</p></div> : activeRun.live ? <LiveRunDetail key={activeRun.id} run={activeRun.live} title={activeRun.title} project={activeRun.project} onBack={() => navigateWorkspace('pipeline')} /> : <>
           <button className="detail-back" type="button" onClick={() => navigateWorkspace('pipeline')}><ArrowLeft size={15} /> 실험 대시보드</button>
           <header className="run-detail-header">
             <div><span className="code-page-kicker">{activeRun.id} / TRAINING</span><span className="run-project-name">{activeRun.project}</span><h1>{activeRun.title}</h1><p>{activeRun.assetId} · {activeRun.version} · 울산 차체 2라인</p></div>
