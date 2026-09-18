@@ -87,6 +87,8 @@ import { VisionMlopsDemo, type DemoStage } from '@/components/vision-mlops-demo'
 import { PortalWorkspaceTabs, type PortalTabId } from '@/components/portal-workspace-tabs';
 import { PortalButton, PortalDetailFrame, PortalFilterSurface, PortalPageFrame, PortalPageHeader, PortalPrismAtmosphere, PortalWorkspaceSurface } from '@/components/portal-page-primitives';
 import { AssetSdkDialog } from '@/components/asset-sdk-dialog';
+import { LiveRunDetail } from '@/components/live-run-detail';
+import { createRun, isFinishedRun, listRuns, PrizmApiError, type Run, type RunParameters } from '@/lib/prizm-api';
 
 type NavGroup = {
   label: string;
@@ -133,11 +135,50 @@ type RunRecord = {
   data: string;
   environment: string;
   resource: string;
-  status: '요청 접수' | '자원 준비' | '실행 중' | '완료';
+  status: '요청 접수' | '자원 준비' | '실행 중' | '완료' | '실패';
   mode: '즉시 실행' | '예약 실행';
   requestedAt: string;
   progress: number;
+  source: 'mock' | 'live';
+  live?: Run;
 };
+
+type RunParameterName = keyof RunParameters;
+
+const runParameterNames: RunParameterName[] = ['epochs', 'batch_size', 'image_size', 'seed'];
+
+function liveRunStatus(run: Run): RunRecord['status'] {
+  if (run.status === 'QUEUED') return '요청 접수';
+  if (run.status === 'SUCCEEDED') return '완료';
+  if (run.status === 'FAILED') return '실패';
+  return run.stage === 'PREPARING' || run.stage === 'DATA' ? '자원 준비' : '실행 중';
+}
+
+function formatRunRequestedAt(iso: string) {
+  const date = new Date(iso);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function toRunRecord(run: Run, assets: CodeAsset[]): RunRecord {
+  const asset = assets.find((item) => item.id === run.assetId);
+  return {
+    id: run.id,
+    assetId: run.assetId,
+    project: asset?.project ?? '용접 품질 고도화',
+    title: asset?.title ?? run.codeKey,
+    version: run.assetVersion,
+    data: 'demo.door_defect · v1',
+    environment: run.environment,
+    resource: run.resource,
+    status: liveRunStatus(run),
+    mode: '즉시 실행',
+    requestedAt: formatRunRequestedAt(run.requestedAt),
+    progress: run.progress,
+    source: 'live',
+    live: run,
+  };
+}
 
 type ScheduleRecord = {
   id: string;
@@ -493,7 +534,7 @@ function PipelineWorkspace({ runs, schedules, view, project, onProjectChange, on
       <PortalPageHeader className="pipeline-workspace-heading" kicker="EXPERIMENT WORKSPACE" title="실험 대시보드" description="과제를 선택해 학습 코드와 실행 이력, 예약 상태를 한곳에서 관리합니다." />
       <section className="experiment-command-surface" aria-label="실험 실행 도구">
         <ExecutionSelect label="과제 선택" value={project} onChange={onProjectChange}><option value="용접 품질 고도화">PRJ000212 · 용접 품질 고도화</option><option value="Surface Zero Defect">PRJ000274 · Surface Zero Defect</option><option value="Cell Quality Intelligence">PRJ000341 · Cell Quality Intelligence</option></ExecutionSelect>
-        <div className="experiment-heading-actions"><div className="pipeline-summary"><span><i className="is-running" /><strong>{projectRuns.filter((run) => run.status !== '완료').length}</strong> 실행 중</span><span><i /><strong>{projectSchedules.filter((schedule) => schedule.active).length}</strong> 활성 스케줄</span></div><button type="button" className="experiment-run-button" onClick={onExecute}><Play size={15} fill="currentColor" /> 파이프라인 실행</button></div>
+        <div className="experiment-heading-actions"><div className="pipeline-summary"><span><i className="is-running" /><strong>{projectRuns.filter((run) => run.status !== '완료' && run.status !== '실패').length}</strong> 실행 중</span><span><i /><strong>{projectSchedules.filter((schedule) => schedule.active).length}</strong> 활성 스케줄</span></div><button type="button" className="experiment-run-button" onClick={onExecute}><Play size={15} fill="currentColor" /> 파이프라인 실행</button></div>
       </section>
       <Tabs value={view} onValueChange={(value) => onViewChange(value as 'runs' | 'schedules')} className="pipeline-workspace-tabs">
         <TabsList variant="line" className="pipeline-workspace-tablist"><TabsTrigger value="runs">실행 내역 <b>{projectRuns.length}</b></TabsTrigger><TabsTrigger value="schedules">예약·스케줄 <b>{projectSchedules.length}</b></TabsTrigger></TabsList>
@@ -540,6 +581,9 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
   const [preflightRunning, setPreflightRunning] = useState(false);
   const [executionResource, setExecutionResource] = useState('a100-20');
   const [executionRuntime, setExecutionRuntime] = useState('yolo12-14');
+  const [runParameterInputs, setRunParameterInputs] = useState<Record<RunParameterName, string>>({ epochs: '3', batch_size: '4', image_size: '320', seed: '42' });
+  const [runSubmitting, setRunSubmitting] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
   const [activeRunId, setActiveRunId] = useState('RUN-26841');
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [pipelineView, setPipelineView] = useState<'runs' | 'schedules'>('runs');
@@ -557,8 +601,8 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
   const [forkDataId, setForkDataId] = useState('PRJ000318-D-0001');
   const [forkTitle, setForkTitle] = useState('조지아 용접 비드 결함 검출 학습');
   const [runRecords, setRunRecords] = useState<RunRecord[]>([
-    { id: 'RUN-26841', assetId: initialAssets[0].id, project: initialAssets[0].project, title: initialAssets[0].title, version: 'v2.4.1', data: 'Weld Image 2026 Q3 · v12', environment: 'pytorch-2.4-yolo12-py311-cu124', resource: 'ml.a100.20gb', status: '완료', mode: '즉시 실행', requestedAt: '09.08 09:42', progress: 100 },
-    { id: 'RUN-26798', assetId: initialAssets[0].id, project: initialAssets[0].project, title: initialAssets[0].title, version: 'v2.4.1', data: 'Weld Image 2026 Q3 · v12', environment: 'pytorch-2.4-yolo12-py311-cu124', resource: 'ml.a100.20gb', status: '완료', mode: '예약 실행', requestedAt: '09.06 02:00', progress: 100 },
+    { id: 'RUN-26841', assetId: initialAssets[0].id, project: initialAssets[0].project, title: initialAssets[0].title, version: 'v2.4.1', data: 'Weld Image 2026 Q3 · v12', environment: 'pytorch-2.4-yolo12-py311-cu124', resource: 'ml.a100.20gb', status: '완료', mode: '즉시 실행', requestedAt: '09.08 09:42', progress: 100, source: 'mock' },
+    { id: 'RUN-26798', assetId: initialAssets[0].id, project: initialAssets[0].project, title: initialAssets[0].title, version: 'v2.4.1', data: 'Weld Image 2026 Q3 · v12', environment: 'pytorch-2.4-yolo12-py311-cu124', resource: 'ml.a100.20gb', status: '완료', mode: '예약 실행', requestedAt: '09.06 02:00', progress: 100, source: 'mock' },
   ]);
   const [schedules, setSchedules] = useState<ScheduleRecord[]>([]);
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -608,19 +652,39 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
     return () => window.clearTimeout(timer);
   }, [demoStage]);
 
-  const hasActiveRuns = runRecords.some((run) => run.status !== '완료');
+  // 시연용 mock run만 진행을 시뮬레이션한다. live run은 백엔드 값을 그대로 쓴다.
+  const hasActiveMockRuns = runRecords.some((run) => run.source === 'mock' && run.status !== '완료');
+  const hasActiveLiveRuns = runRecords.some((run) => run.live !== undefined && !isFinishedRun(run.live));
 
   useEffect(() => {
-    if (!hasActiveRuns) return;
+    let cancelled = false;
+    const load = () => {
+      listRuns()
+        .then((runs) => {
+          if (cancelled) return;
+          setRunRecords((current) => [...runs.map((run) => toRunRecord(run, initialAssets)), ...current.filter((record) => record.source === 'mock')]);
+        })
+        .catch(() => undefined); // 실행 서버가 꺼져 있으면 mock 목록만 보여준다
+    };
+    load();
+    const timer = hasActiveLiveRuns ? window.setInterval(load, 5000) : undefined;
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearInterval(timer);
+    };
+  }, [hasActiveLiveRuns]);
+
+  useEffect(() => {
+    if (!hasActiveMockRuns) return;
     const timer = window.setInterval(() => {
       setRunRecords((current) => current.map((run) => {
-        if (run.status === '완료') return run;
+        if (run.source !== 'mock' || run.status === '완료') return run;
         const nextProgress = Math.min(100, run.progress + 7);
         return { ...run, progress: nextProgress, status: nextProgress >= 100 ? '완료' : nextProgress >= 24 ? '실행 중' : nextProgress >= 10 ? '자원 준비' : '요청 접수' };
       }));
     }, 2400);
     return () => window.clearInterval(timer);
-  }, [hasActiveRuns]);
+  }, [hasActiveMockRuns]);
 
   const selectedAsset = assets.find((asset) => asset.id === selectedAssetId) ?? assets[0];
   const activeRun = runRecords.find((run) => run.id === activeRunId) ?? runRecords[0];
@@ -698,13 +762,13 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
     window.history.replaceState(null, '', `/assets/code?${params.toString()}`);
   };
 
-  const navigateWorkspace = (nextScreen: WorkspaceScreen) => {
+  const navigateWorkspace = (nextScreen: WorkspaceScreen, runId = activeRunId) => {
     setScreen(nextScreen);
     if (nextScreen === 'detail' || nextScreen === 'run') setOpenWorkspaceTabs((current) => current.includes(nextScreen) ? current : [...current, nextScreen]);
     if (nextScreen === 'catalog') window.history.replaceState(null, '', '/assets/code');
     if (nextScreen === 'detail') window.history.replaceState(null, '', `/assets/code?asset=${selectedAssetId}`);
     if (nextScreen === 'pipeline') window.history.replaceState(null, '', '/assets/code?pipeline=1');
-    if (nextScreen === 'run') window.history.replaceState(null, '', `/assets/code?run=${activeRunId}`);
+    if (nextScreen === 'run') window.history.replaceState(null, '', `/assets/code?run=${runId}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -737,32 +801,46 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
     }, 650);
   };
 
-  const beginRun = () => {
-    const runId = `RUN-${26902 + runRecords.length}`;
-    const newRun: RunRecord = {
-      id: runId, assetId: selectedAsset.id, project: selectedAsset.project, title: selectedAsset.title, version: selectedVersion,
-      data: 'PRJ000212-D-0001 · 최신 버전',
-      environment: executionRuntime === 'yolo12-14' ? 'pytorch-2.4-yolo12-py311-cu124' : 'pytorch-2.4-vision-py312-cu124',
-      resource: executionResource === 'a100-10' ? 'ml.a100.10gb' : executionResource === 'a100-20' ? 'ml.a100.20gb' : 'ml.a100.48gb',
-      status: '요청 접수', mode: '즉시 실행', requestedAt: '방금', progress: 4,
-    };
-    setRunRecords((current) => [newRun, ...current]);
-    setActiveRunId(runId);
-    setPipelineView('runs');
-    setExecutionOpen(false);
-    setNotice('코드 실행이 요청되었습니다. Airflow에서 실행 준비를 시작합니다.');
+  const beginRun = async () => {
+    setRunSubmitting(true);
+    setRunError(null);
+    try {
+      const run = await createRun({
+        assetId: selectedAsset.id,
+        version: selectedVersion,
+        // 빈 값·소수는 NaN/정수가 아닌 값으로 전송되어 백엔드가 400 메시지를 돌려준다
+        parameters: {
+          epochs: Number(runParameterInputs.epochs),
+          batch_size: Number(runParameterInputs.batch_size),
+          image_size: Number(runParameterInputs.image_size),
+          seed: Number(runParameterInputs.seed),
+        },
+        environment: executionRuntime === 'yolo12-14' ? 'pytorch-2.4-yolo12-py311-cu124' : 'pytorch-2.4-vision-py312-cu124',
+        resource: executionResource === 'a100-10' ? 'ml.a100.10gb' : executionResource === 'a100-20' ? 'ml.a100.20gb' : 'ml.a100.48gb',
+      });
+      setRunRecords((current) => [toRunRecord(run, assets), ...current.filter((record) => record.id !== run.id)]);
+      setActiveRunId(run.id);
+      setPipelineView('runs');
+      setExecutionOpen(false);
+      setNotice('코드 실행이 요청되었습니다. Airflow에서 실행 준비를 시작합니다.');
+      navigateWorkspace('run', run.id);
+    } catch (error) {
+      setRunError(error instanceof PrizmApiError ? error.message : '실행 요청 중 알 수 없는 오류가 발생했습니다');
+    } finally {
+      setRunSubmitting(false);
+    }
   };
 
   const launchWithPreflight = () => {
     if (preflightPassed) {
-      beginRun();
+      void beginRun();
       return;
     }
     setPreflightRunning(true);
     window.setTimeout(() => {
       setPreflightRunning(false);
       setPreflightPassed(true);
-      beginRun();
+      void beginRun();
     }, 700);
   };
 
@@ -1009,9 +1087,9 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
           </Tabs>}
         </PortalDetailFrame>}
 
-        {!visionDemoOpen && screen === 'pipeline' && <PipelineWorkspace runs={runRecords} schedules={schedules} view={pipelineView} project={pipelineProject} onProjectChange={(project) => { setPipelineProject(project); const asset = assets.find((item) => item.project === project && item.executable); if (asset) setPipelineCodeAssetId(asset.id); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); params.set('project', project === '용접 품질 고도화' ? 'PRJ000212' : project); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onExecute={openPipelineCodePicker} onViewChange={(value) => { setPipelineView(value); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); value === 'schedules' ? params.set('view', 'schedules') : params.delete('view'); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onOpenRun={(id) => { setActiveRunId(id); navigateWorkspace('run'); }} />}
+        {!visionDemoOpen && screen === 'pipeline' && <PipelineWorkspace runs={runRecords} schedules={schedules} view={pipelineView} project={pipelineProject} onProjectChange={(project) => { setPipelineProject(project); const asset = assets.find((item) => item.project === project && item.executable); if (asset) setPipelineCodeAssetId(asset.id); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); params.set('project', project === '용접 품질 고도화' ? 'PRJ000212' : project); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onExecute={openPipelineCodePicker} onViewChange={(value) => { setPipelineView(value); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); value === 'schedules' ? params.set('view', 'schedules') : params.delete('view'); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onOpenRun={(id) => { setActiveRunId(id); navigateWorkspace('run', id); }} />}
 
-        {!visionDemoOpen && screen === 'run' && <PortalDetailFrame className="run-detail-page">
+        {!visionDemoOpen && screen === 'run' && <PortalDetailFrame className="run-detail-page">{activeRun.live ? <LiveRunDetail key={activeRun.id} run={activeRun.live} title={activeRun.title} project={activeRun.project} onBack={() => navigateWorkspace('pipeline')} /> : <>
           <button className="detail-back" type="button" onClick={() => navigateWorkspace('pipeline')}><ArrowLeft size={15} /> 실험 대시보드</button>
           <header className="run-detail-header">
             <div><span className="code-page-kicker">{activeRun.id} / TRAINING</span><span className="run-project-name">{activeRun.project}</span><h1>{activeRun.title}</h1><p>{activeRun.assetId} · {activeRun.version} · 울산 차체 2라인</p></div>
@@ -1037,7 +1115,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
           </div>
           <details className="run-log-details"><summary><span><TerminalSquare size={15} /> Airflow 실행 로그</span><small>기술 진단 정보 · 필요할 때 펼쳐보기</small><ChevronDown size={14} /></summary><pre>{`[${activeRun.requestedAt}] Airflow DAG request accepted · ${activeRun.id}\n[PARAMETERS] Papermill injected 7 parameters\n[PRECHECK] Code and asset permission passed (8/8)\n[ENV] ${activeRun.environment} image prepared\n[RESOURCE] ${activeRun.resource} allocation requested\n[DATA] ${activeRun.data} downloaded\n[TRACKING] MLflow run started · experiment usn-weld-defect\n${activeRun.progress >= 24 ? '[RUNNING] Training started · NVIDIA A100 20GB\n[TRAIN] Epoch 31/80 · mAP50 0.934 · loss 0.147' : '[WAITING] Worker allocation in progress'}\n${activeRun.progress >= 100 ? '[COMPLETE] Epoch 80/80 · mAP50 0.968 · loss 0.082\n[MLFLOW] Parameters, metrics and model artifact logged\n[REGISTER] PRIZM model version created · WeldNet 2.5.0' : '[STREAM] Awaiting next checkpoint...'}`}</pre></details>
           {activeRun.progress >= 100 && <section className="run-result-strip"><div><ShieldCheck size={22} /><span><strong>평가 기준 7개 통과</strong><small>WELD-DETECTION-GATE:v3</small></span></div><div><span>mAP50</span><strong>0.968</strong></div><div><span>생성 모델</span><strong>WeldNet 2.5.0</strong></div><button type="button">모델 자산 확인 <ArrowRight size={14} /></button></section>}
-        </PortalDetailFrame>}
+        </>}</PortalDetailFrame>}
 
         {notice && <output className="code-notice"><Check size={15} /><span>{notice}</span>{notice.includes('실행') && <button type="button" className="code-notice-link" onClick={() => { setNotice(null); navigateWorkspace('pipeline'); }}>실험 대시보드 보기 <ArrowRight size={13} /></button>}<button type="button" onClick={() => setNotice(null)} aria-label="알림 닫기"><X size={14} /></button></output>}
         <AssetSdkDialog open={sdkOpen} onOpenChange={setSdkOpen} type="code" assetId={selectedAsset.id} version={selectedVersion} title={selectedAsset.title} />
@@ -1061,10 +1139,10 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
           <div className="execution-sheet-body">
             <section className="execution-form-section execution-target-section"><span className="execution-section-number">01</span><div><h3>실행 대상</h3><p>결과는 현재 과제의 실행 이력에 자동으로 기록됩니다.</p><dl><div><dt>과제</dt><dd>{selectedAsset.project}</dd></div><div><dt>코드</dt><dd>{selectedAsset.title}</dd></div><div><dt>버전</dt><dd>{selectedVersion}</dd></div></dl></div></section>
             <section className="execution-form-section"><span className="execution-section-number">02</span><div><h3>실행 자원과 환경</h3><p>실행 자원과 Docker 환경은 서로 독립적으로 선택합니다.</p><div className="execution-resource-grid"><ExecutionSelect label="실행 자원" value={executionResource} onChange={(value) => { setExecutionResource(value); setPreflightPassed(false); }}><option value="a100-10">ml.a100.10gb · CPU 8 · MEM 32GB</option><option value="a100-20">ml.a100.20gb · CPU 16 · MEM 64GB · 권장</option><option value="a100-48">ml.a100.48gb · CPU 32 · MEM 128GB</option></ExecutionSelect><ExecutionSelect label="실행 환경" value={executionRuntime} onChange={(value) => { setExecutionRuntime(value); setPreflightPassed(false); }}><option value="yolo12-14">pytorch-2.4-yolo12-py311-cu124</option><option value="vision32">pytorch-2.4-vision-py312-cu124</option></ExecutionSelect></div><div className="runtime-independent-summary"><span><Cpu size={15} /><small>실행 자원</small><strong>{executionResource === 'a100-10' ? 'ml.a100.10gb' : executionResource === 'a100-20' ? 'ml.a100.20gb' : 'ml.a100.48gb'}</strong></span><span><Layers3 size={15} /><small>실행 환경</small><strong>{executionRuntime === 'yolo12-14' ? 'pytorch-2.4-yolo12-py311-cu124' : 'pytorch-2.4-vision-py312-cu124'}</strong></span></div></div></section>
-            <section className="execution-form-section"><span className="execution-section-number">03</span><div><h3>파라미터</h3><p>Papermill이 동일한 변수명으로 Notebook에 값을 주입합니다.</p><div className="parameter-grid parameter-asset-grid"><label><span>data_id</span><input type="text" defaultValue="PRJ000212-D-0001" /></label><label><span>model_id</span><input type="text" defaultValue="PRJ000001-M-0012" /></label><label><span>model_version</span><input type="text" defaultValue="v12.0.0" /></label></div><div className="parameter-grid parameter-value-grid"><label><span>epochs</span><input type="number" defaultValue="80" /></label><label><span>batch_size</span><input type="number" defaultValue="16" /></label><label><span>image_size</span><input type="number" defaultValue="1024" /></label><label><span>seed</span><input type="number" defaultValue="42" /></label></div><small className="parameter-contract"><Check size={13} /> parameters 셀 다음에 injected-parameters 셀이 자동 생성됩니다.</small></div></section>
+            <section className="execution-form-section"><span className="execution-section-number">03</span><div><h3>파라미터</h3><p>Papermill이 동일한 변수명으로 Notebook에 값을 주입합니다.</p><div className="parameter-grid parameter-asset-grid"><label><span>data_id</span><input type="text" value="PRJ000212-D-0001" readOnly /></label><label><span>model_id</span><input type="text" value="PRJ000001-M-0012" readOnly /></label><label><span>model_version</span><input type="text" value="v12.0.0" readOnly /></label></div><div className="parameter-grid parameter-value-grid">{runParameterNames.map((name) => <label key={name}><span>{name}</span><input type="number" min={1} step={1} value={runParameterInputs[name]} onChange={(event) => { const { value } = event.target; setRunParameterInputs((current) => ({ ...current, [name]: value })); }} /></label>)}</div><small className="parameter-contract"><Check size={13} /> parameters 셀 다음에 injected-parameters 셀이 자동 생성됩니다.</small></div></section>
             <section className={preflightPassed ? 'preflight-panel is-passed' : preflightRunning ? 'preflight-panel is-running' : 'preflight-panel'}><header><div><ShieldCheck size={18} /><span><strong>{preflightRunning ? '실행 조건 확인 중' : '실행 전 확인'}</strong><small>{preflightPassed ? '8개 항목을 모두 확인했습니다.' : preflightRunning ? '코드, 데이터, 환경 호환성을 점검합니다.' : '실행 조건과 권한을 확인합니다.'}</small></span></div><b>{preflightPassed ? '8 / 8 PASS' : preflightRunning ? 'CHECKING' : 'READY'}</b></header>{preflightPassed && <div className="preflight-checks"><span><Check size={12} /> 코드·환경 호환</span><span><Check size={12} /> 데이터 권한</span><span><Check size={12} /> 입력 규격</span><span><Check size={12} /> GPU 할당</span></div>}</section>
           </div>
-          <SheetFooter className="execution-sheet-footer"><div className="execution-estimate"><span>예상 소요시간</span><strong>약 1시간 45분</strong></div><div className="execution-footer-actions"><button type="button" className="execution-preflight-action" disabled={preflightRunning} onClick={runPreflight}><ShieldCheck size={14} /> {preflightPassed ? '다시 점검' : preflightRunning ? '점검 중' : '사전 점검'}</button><button type="button" className="execution-schedule-action" onClick={openScheduling}><CalendarClock size={14} /> 스케줄링</button><button type="button" className="detail-primary-action" disabled={preflightRunning} onClick={launchWithPreflight}><Play size={14} fill="currentColor" /> 즉시 실행</button></div></SheetFooter>
+          <SheetFooter className="execution-sheet-footer">{runError && <p className="execution-run-error" role="alert">{runError}</p>}<div className="execution-estimate"><span>예상 소요시간</span><strong>약 3~5분 (CPU)</strong></div><div className="execution-footer-actions"><button type="button" className="execution-preflight-action" disabled={preflightRunning} onClick={runPreflight}><ShieldCheck size={14} /> {preflightPassed ? '다시 점검' : preflightRunning ? '점검 중' : '사전 점검'}</button><button type="button" className="execution-schedule-action" onClick={openScheduling}><CalendarClock size={14} /> 스케줄링</button><button type="button" className="detail-primary-action" disabled={preflightRunning || runSubmitting} onClick={launchWithPreflight}><Play size={14} fill="currentColor" /> {runSubmitting ? '실행 요청 중' : '즉시 실행'}</button></div></SheetFooter>
         </SheetContent>
       </Sheet>
 
