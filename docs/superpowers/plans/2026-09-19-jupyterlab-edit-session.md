@@ -449,6 +449,17 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 - Consumes: 없음
 - Produces: `prizm/runtime-base:v1` 이미지의 도구 venv에 `jupyter lab` 실행 파일. 새 이미지 ID(캐시 키가 여기서 파생되므로, 이후 모든 파생 이미지가 재빌드된다 — 의도된 동작)
 
+> **Task 5 구현 중 발견한 실행 결과 기록 (2026-09-19):** 아래 Step 4의 `\b` 기반 `sed -i ''`
+> 패턴은 macOS BSD sed에서 `\b`(단어 경계)를 지원하지 않아 조용히 아무 일도 안 하고
+> 성공한 것처럼 종료된다 — 구현 시 GNU 확장이 필요한 정규식은 `perl -pi -e`로 바꿔야
+> 한다. 또한 이 태스크의 패턴은 `from mlops import X` 형태와 `"/opt/mlops-sdk"` 같은
+> 경로 리터럴을 못 잡는다(`seed/seed_assets.py`, `seed/register_notebook_v2.py`,
+> `portal/app.py`에서 실제로 발견됨) — 두 패턴을 보강해서 이 형태들도 함께 치환해야
+> 한다. **가장 중요한 발견**: AI Hub/MinIO에 이미 등록된 노트북 버전은 로컬
+> `notebooks/*.ipynb`를 고쳐도 갱신되지 않는다 — Step 8 재검증 전에
+> `seed/seed_assets.py`(또는 `register_notebook_v2.py`)를 다시 실행해 고쳐진 노트북을
+> 재업로드해야 한다. 자세한 내용은 구현 시 남긴 리포트를 참고.
+
 - [ ] **Step 1: 백업**
 
 ```bash
