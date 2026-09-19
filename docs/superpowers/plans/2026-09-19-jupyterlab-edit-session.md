@@ -1116,6 +1116,18 @@ sleep 5
 ---
 ### Task 6: EditSessionService — 생성·재사용·종료 오케스트레이션
 
+> **Task 6 구현 중 발견한 실제 배선 버그 (2026-09-19):** 아래 Step 4의 생성자는
+> `PrizmProperties.EditSession`·`PrizmProperties.MlopsSdk`를 Spring이 개별 빈처럼 주입할
+> 수 있는 것으로 잘못 가정하고 있다 — 이 둘은 `PrizmProperties`(하나의
+> `@ConfigurationProperties` 빈) 안의 중첩 레코드일 뿐이라 개별 주입이 안 되고, 그대로
+> 두면 `PrizmBackendApplicationTests`의 스프링 컨텍스트 로딩 자체가 깨진다(확인됨:
+> `NoSuchBeanDefinitionException`, 테스트 3건 회귀). 구현 시 `EditSessionContainerLauncher`
+> ·`BaseImageResolver`가 이미 쓰고 있는 2-생성자 패턴(`@Autowired`로 `PrizmProperties`
+> 전체를 받아 위임하는 공개 생성자 + 분해된 값을 받는 패키지 프라이빗 생성자)을 그대로
+> 따라야 한다.
+
+
+
 **Files:**
 - Create: `src/main/java/com/prizm/backend/edit/EditSessionService.java`
 - Create: `src/main/java/com/prizm/backend/api/EditSessionLaunchException.java`
