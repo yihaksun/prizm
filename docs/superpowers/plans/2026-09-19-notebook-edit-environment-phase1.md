@@ -1846,9 +1846,13 @@ RUN pip install --no-cache-dir /opt/mlops-sdk
 RUN python -m venv /opt/prizm/tools \
     && /opt/prizm/tools/bin/pip install --no-cache-dir papermill==2.6.0
 
-# 도구 venv에서 실행된 papermill이 사용자 환경의 커널스펙을 찾을 수 있어야 한다
+# 도구 venv에서 실행된 papermill이 사용자 환경의 커널스펙을 찾을 수 있어야 한다.
+# PATH는 뒤에 붙인다(앞이 아니라) - 앞에 붙이면 맨 `python`/`pip` 호출이
+# 도구 venv를 가리키게 되어 "이 이미지의 기본 python = 사용자 환경"이라는
+# 전제가 깨진다. papermill은 사용자 환경에 동명 실행 파일이 없으므로
+# 뒤에 붙여도 정상적으로 찾아진다.
 ENV JUPYTER_PATH=/usr/local/share/jupyter
-ENV PATH=/opt/prizm/tools/bin:$PATH
+ENV PATH=$PATH:/opt/prizm/tools/bin
 ```
 
 - [ ] **Step 3: 이미지 빌드**
