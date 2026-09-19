@@ -66,20 +66,20 @@ Notebook을 브라우저에서 바로 수정할 수 있는 환경(Colab과 같�
 
 ## 3. 전체 구조
 
+```mermaid
+flowchart TD
+    A["코드 등록/수정<br/>requirements 입력"] --> B["정규화 · 캐시 키 계산"]
+    B --> C{"레지스트리에<br/>이미 있는가"}
+    C -->|"있음 (0초)"| G["자산 버전에 cache_key 연결"]
+    C -->|없음| E["파생 이미지 빌드<br/>uv pip install"]
+    E --> F["레지스트리 push"]
+    F --> G
+    G --> H["편집: JupyterLab 컨테이너<br/>(Phase 2)"]
+    G --> I["실행: Airflow DockerOperator<br/>(Phase 1)"]
+    H -.->|동일 이미지| I
 ```
-[코드 등록/수정]  requirements 입력
-      |
-      v  (백그라운드)
-  캐시 키 계산 --> 레지스트리에 있으면 종료(0초)
-      |                없으면
-      v
-  파생 이미지 빌드 --> 레지스트리 push --> 자산에 env_cache_key 기록
-      |
-      +----------------------------+
-      v                            v
-[편집] JupyterLab 컨테이너     [실행] Airflow가 같은 이미지로 papermill
-   (Phase 2)                      (Phase 1)
-```
+
+편집과 실행이 같은 파생 이미지를 쓰기 때문에 두 경로의 환경이 어긋날 수 없다.
 
 ## 4. 환경 빌드 파이프라인 (Phase 1)
 
@@ -132,6 +132,20 @@ cache_key = sha256(base_image_digest + "\n" + requirements_norm + "\n" + recipe_
 5. 성공 → `prizm/env:<cache_key>`로 push, 상태 `READY`, 자산 상태 `준비 완료`
 6. 실패 → 상태 `FAILED`, 빌드 로그를 MinIO에 저장하고 요약 에러를 자산 화면에 노출.
    등록 자체는 막지 않되 실행·편집 버튼을 비활성화한다
+
+빌드는 다음 상태를 오간다.
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: 등록·수정 요청
+    PENDING --> BUILDING: 빌드 워커가 집어감
+    BUILDING --> READY: 빌드 및 push 성공
+    BUILDING --> FAILED: 패키지 설치 실패
+    READY --> [*]: 자산에 연결
+    FAILED --> PENDING: requirements 수정 후 재시도
+```
+
+`READY`인 `cache_key`를 다시 요청하면 빌드 없이 즉시 연결된다.
 
 ### 4.4 동시성
 
@@ -186,6 +200,23 @@ DAG가 `PythonOperator`로 Airflow 워커 프로세스 안에서 papermill을 �
 | 베이스 런타임 12종 | python + ML 스택 + `ipykernel`, 도구 venv | Airflow 없음 |
 | 파생 이미지 | 베이스 + 사용자 requirements | §4.1의 캐시 키로 식별 |
 
+```mermaid
+flowchart TB
+    subgraph ORCH["Airflow 오케스트레이터 이미지"]
+        O1["apache-airflow<br/>(ML 패키지 불필요)"]
+    end
+
+    subgraph BASE["베이스 런타임 12종 · 큐레이션 및 버전관리"]
+        B1["사용자 환경 site-packages<br/>python · ML 스택 · ipykernel"]
+        B2["도구 venv /opt/prizm/tools<br/>jupyterlab · jupyter-server · papermill"]
+    end
+
+    BASE -->|"+ 사용자 requirements<br/>사용자 환경에만 설치"| DER["파생 이미지<br/>prizm/env:cache_key"]
+    ORCH -.->|"DockerOperator로 기동"| DER
+    DER --> RUN["실행: papermill"]
+    DER --> EDIT["편집: JupyterLab"]
+```
+
 **Airflow는 파생 이미지에 포함하지 않는다.** §5의 `DockerOperator` 전환이 이 결합을
 끊는다. 자식 컨테이너는 Airflow의 존재를 모른다.
 
@@ -229,6 +260,20 @@ venv를 건드리지 않는다.
 Airflow 이미지에 구워져 있다.
 
 ### 5.2 변경 내용
+
+```mermaid
+flowchart LR
+    subgraph AS_IS["현재"]
+        A1["Airflow 워커 프로세스"] --> A2["PythonOperator<br/>pm.execute_notebook()"]
+        A2 --> A3["워커와 같은 파이썬 환경<br/>airflow + torch 등 422개 혼재"]
+    end
+
+    subgraph TO_BE["변경 후"]
+        B1["Airflow 워커"] --> B2["DockerOperator"]
+        B2 -->|기동| B3["파생 이미지 컨테이너<br/>도구 venv의 papermill 실행"]
+        B3 -.->|"runs 볼륨 공유"| B4["백엔드가 출력 .ipynb를 읽어<br/>SSE 스트리밍"]
+    end
+```
 
 `execute_notebook` 태스크를 `DockerOperator`(프로토타입) 또는 `KubernetesPodOperator`(운영)로
 교체해, 자산의 `image_ref` 컨테이너 안에서 papermill이 실행되도록 한다. 다음이 컨테이너
