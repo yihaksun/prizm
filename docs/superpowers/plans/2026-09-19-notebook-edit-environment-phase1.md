@@ -929,6 +929,7 @@ package com.prizm.backend.environment;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -948,6 +949,9 @@ public class ProcessCommandRunner implements CommandRunner {
                 .redirectErrorStream(true);
         Process process = null;
         try {
+            // 작업 디렉터리가 없으면 ProcessBuilder는 "명령을 실행할 수 없습니다"라는
+            // 모호한 메시지로 실패한다. 빌드 루트는 첫 실행 때 없을 수 있다.
+            Files.createDirectories(workingDirectory);
             process = processBuilder.start();
             String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
