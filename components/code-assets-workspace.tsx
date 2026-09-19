@@ -1029,7 +1029,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
           <header className="code-detail-header">
             <div className="code-detail-title">
               <span className="detail-project-name">{selectedAsset.project}</span>
-              <h1>{selectedAsset.title}</h1>
+              <div className="detail-title-row"><h1>{selectedAsset.title}</h1><span className="detail-readiness-badge" title="실행 준비 상태: 재현 확인 완료 · 2026.09.08 · RUN-26841" aria-label="실행 준비 상태: 재현 확인 완료"><ShieldCheck size={15} /></span></div>
               <p>{selectedAsset.plant} / {selectedAsset.process} · {selectedAsset.owner}</p>
               <div className="detail-identity-row">
                 <span className={`code-role role-${selectedAsset.role}`}>{selectedAsset.role}</span><TrustStatus status={selectedAsset.verified} />
@@ -1070,24 +1070,23 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
               <div className="notebook-layout">
                 <NotebookHtmlViewer version={selectedVersion} />
                 <aside className="detail-side-stack">
+                  <section className="asset-utility-card">
+                    <header className="asset-utility-heading"><strong>자산 활용</strong><span>코드를 내려받거나 다른 과제에서 재사용합니다.</span></header>
+                    <div className="asset-utility-actions">
+                      <button type="button" onClick={downloadAsset}><Download size={16} /><span>코드 다운로드</span><ArrowRight size={14} /></button>
+                      <button type="button" onClick={() => setSdkOpen(true)}><TerminalSquare size={16} /><span>SDK 스니펫 보기</span><ArrowRight size={14} /></button>
+                      <button type="button" onClick={() => setForkOpen(true)}><GitFork size={16} /><span>이 코드로 시작</span><ArrowRight size={14} /></button>
+                    </div>
+                    <div className="asset-rating-control"><div><strong>이 코드가 도움이 되었나요?</strong><span>{userRating ? `${userRating}점을 남겼습니다` : '평점을 남겨 재사용 판단을 도와주세요'}</span></div><span>{[1,2,3,4,5].map((score) => <button type="button" className={userRating >= score ? 'is-active' : ''} onClick={() => { setUserRating(score); setNotice(`${score}점 평가를 반영했습니다.`); }} aria-label={`${score}점 주기`} key={score}><Star size={18} fill={userRating >= score ? 'currentColor' : 'none'} /></button>)}</span></div>
+                    <button type="button" className="asset-discussion-action" onClick={() => setNotice('이 코드 자산의 디스커션 18개를 불러옵니다.')}><MessageSquareText size={16} /><span><strong>디스커션</strong><small>질문과 활용 경험을 나눕니다</small></span><b>18</b><ArrowRight size={13} /></button>
+                  </section>
                   <div className="execution-rail">
-                    <section className="rail-status"><span>실행 준비 상태</span><strong><ShieldCheck size={17} /> 재현 확인 완료</strong><small>2026.09.08 · RUN-26841</small></section>
                     <section><span className="rail-label">입력 데이터</span><a href="/assets/data?asset=PRJ000212-D-0001"><Database size={15} /><div><strong>용접 비드 결함 데이터셋</strong><small>v13 · 43,180 images</small></div><ArrowUpRight size={13} /></a></section>
                     <section><span className="rail-label">실행 자원</span><a href="/resources/compute"><Cpu size={15} /><div><strong>ml.a100.20gb</strong><small>CPU 16 · MEM 64GB · NVIDIA A100 20GB</small></div><ArrowUpRight size={13} /></a></section>
                     <section><span className="rail-label">실행 환경</span><a href="/resources/environments"><Layers3 size={15} /><div><strong>pytorch-2.4-yolo12-py311-cu124</strong><small>Ubuntu 22.04 · Python 3.11 · CUDA 12.4</small></div><ArrowUpRight size={13} /></a></section>
                     <section><span className="rail-label">출력 자산</span><a href="/assets/models"><Box size={15} /><div><strong>WeldNet 2.4.1</strong><small>Model candidate</small></div><ArrowUpRight size={13} /></a></section>
                     <button type="button" className="rail-run-button" onClick={() => setExecutionOpen(true)}><Play size={14} fill="currentColor" /> 이 버전으로 실행</button>
                   </div>
-                  <section className="asset-utility-card">
-                    <header className="asset-utility-heading"><strong>자산 활용</strong><span>코드를 내려받거나 다른 과제에서 재사용합니다.</span></header>
-                    <div className="asset-utility-actions">
-                      <button type="button" onClick={downloadAsset}><Download size={16} /><span>코드 다운로드</span><ArrowRight size={14} /></button>
-                      <button type="button" onClick={() => setSdkOpen(true)}><TerminalSquare size={16} /><span>SDK 스니펫 보기</span><ArrowRight size={14} /></button>
-                      <button type="button" className="is-primary" onClick={() => setForkOpen(true)}><GitFork size={16} /><span>이 코드로 시작</span><ArrowRight size={14} /></button>
-                    </div>
-                    <div className="asset-rating-control"><div><strong>이 코드가 도움이 되었나요?</strong><span>{userRating ? `${userRating}점을 남겼습니다` : '평점을 남겨 재사용 판단을 도와주세요'}</span></div><span>{[1,2,3,4,5].map((score) => <button type="button" className={userRating >= score ? 'is-active' : ''} onClick={() => { setUserRating(score); setNotice(`${score}점 평가를 반영했습니다.`); }} aria-label={`${score}점 주기`} key={score}><Star size={18} fill={userRating >= score ? 'currentColor' : 'none'} /></button>)}</span></div>
-                    <button type="button" className="asset-discussion-action" onClick={() => setNotice('이 코드 자산의 디스커션 18개를 불러옵니다.')}><MessageSquareText size={16} /><span><strong>디스커션</strong><small>질문과 활용 경험을 나눕니다</small></span><b>18</b><ArrowRight size={13} /></button>
-                  </section>
                 </aside>
               </div>
             </TabsContent>

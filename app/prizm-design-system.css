@@ -1481,9 +1481,6 @@
 .asset-utility-actions button svg { flex:none; color:#1789a8; }
 .asset-utility-actions button span { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .asset-utility-actions button > svg:last-child { color:#6f8796; }
-.asset-utility-actions button.is-primary { color:white; background:var(--hyundai-blue); border-color:var(--hyundai-blue); }
-.asset-utility-actions button.is-primary svg { color:white; }
-.asset-utility-actions button.is-primary:hover { color:white; background:#00447f; border-color:#00447f; }
 .asset-rating-control { margin-top:1rem; padding:1rem 0; display:grid; gap:.7rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 .asset-rating-control > div strong,.asset-rating-control > div > span { display:block; }
 .asset-rating-control > div strong { color:#29475c; font-size:.76rem; }
@@ -1739,3 +1736,7 @@
 .pipeline-status.state-실패 i { background: #d14343; }
 .execution-sheet-footer:has(.execution-run-error) { flex-wrap: wrap !important; }
 .execution-run-error { flex-basis: 100%; margin: 0; padding: .55rem .75rem; color: #b42318; background: #fdf3f3; border: 1px solid #f1c4c4; border-radius: .35rem; font-size: .76rem; }
+
+/* ── 코드 자산 상세: 타이틀 옆 실행 준비 상태 배지 ───────────────── */
+.detail-title-row { display: flex; align-items: center; gap: .55rem; }
+.detail-readiness-badge { width: 1.9rem; height: 1.9rem; margin-top: .55rem; display: inline-flex; align-items: center; justify-content: center; flex: none; color: #1c6e5d; background: #eaf5f1; border: 1px solid #bfe0d5; border-radius: 999px; cursor: default; }
