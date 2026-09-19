@@ -146,8 +146,14 @@ JupyterLab 프로세스)에 실제로 통하는지 아직 손으로 검증하지
   "편집 세션 연결이 끊겼습니다, 다시 시작해 주세요" 같은 한국어 메시지로 바꾸고, 그 시점에
   세션을 `TERMINATED`로 표시한다(다음 요청부터는 바로 404).
 - **유휴 회수**: Phase 1의 `@Scheduled` 폴링 패턴을 재사용한다. 30분간 활동이 없으면
-  드래프트를 MinIO로 flush → `docker stop/rm` → `TERMINATED`. flush 실패는 재시도하되
-  조용히 삼키지 않고 로그로 남긴다 — 이것이 유일하게 데이터 유실이 가능한 지점이다.
+  `docker stop/rm` → `TERMINATED`.
+
+> **구현 계획 작성 중 발견해 반영한 정정**: 실제 AI Hub SDK(`mlops`, 이후 `prizm`으로 개명)에는
+> "드래프트로 저장"하는 별도 기능이 없다 — `code.upload()`가 호출되는 즉시 새 버전이 만들어진다.
+> 그래서 위 "드래프트를 MinIO로 flush"는 실제로 구현할 수 없는 기능이었다. 대신 **세션 종료
+> (유휴 회수·다른 자산으로 전환) 시 호스트 세션 디렉터리를 그대로 삭제한다** — "새 버전으로
+> 등록"을 누르지 않은 편집 내용은 이 시점에 사라진다. 이는 사용자 승인을 받은 명시적 결정이다.
+> 자세한 내용은 `docs/superpowers/plans/2026-09-19-jupyterlab-edit-session.md` Task 6을 참고.
 - **테스트 전략**: 백엔드는 Phase 1과 동일하게 `CommandRunner` seam으로 `docker run/stop`을
   격리해 Mockito 단위 테스트를 짠다. Route Handler(TypeScript)는 이 프로젝트 관행대로
   테스트 프레임워크 없이 `tsc`+`oxlint`, 실제 프록시·WS 동작은 Playwright E2E로 검증한다
