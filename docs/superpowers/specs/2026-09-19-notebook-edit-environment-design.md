@@ -160,11 +160,49 @@ environment_build
 ```
 
 requirements는 자산 **버전마다** 다르므로 환경은 자산 버전 단위로 연결된다. 다만 코드
-자산을 영속화하는 저장소가 아직 없다(§4.6). Phase 1에서는 설정으로 바인딩된 단일 자산에
+자산을 영속화하는 저장소가 아직 없다(§4.7). Phase 1에서는 설정으로 바인딩된 단일 자산에
 requirements를 부여해 파이프라인을 검증하고, 자산 버전 ↔ `cache_key` 매핑 테이블은 자산
 영속화 과제에서 도입한다.
 
-### 4.6 전제: 코드 자산 영속화는 아직 없다
+### 4.6 이미지 구성과 의존성 격리
+
+현재 `prototype-airflow` 이미지는 **422개 패키지가 한 환경에 뒤섞여** 있다(2026-09-19 실측).
+
+```
+apache-airflow  2.10.2      papermill   2.6.0      ipykernel  6.29.5
+torch           2.14.0+cpu  ultralytics 8.3.28     jupyterlab 없음
+```
+
+DAG가 `PythonOperator`로 Airflow 워커 프로세스 안에서 papermill을 호출하기 때문에,
+오케스트레이터와 ML 런타임이 같은 파이썬 환경을 공유하고 있다. 여기에 JupyterLab과
+사용자 패키지까지 얹으면 의존성 충돌이 일상이 된다. Airflow 2.10 하나가 150~200개
+패키지를 끌고 오는 데다, constraints로 버전을 강하게 고정하기 때문이다.
+
+이 설계는 세 계층으로 분리한다.
+
+| 이미지 | 포함 | 비고 |
+|---|---|---|
+| Airflow 오케스트레이터 | airflow만 | torch·ultralytics 제거 가능. 더 이상 노트북을 자기 안에서 실행하지 않는다 |
+| 베이스 런타임 12종 | python + ML 스택 + `ipykernel`, 도구 venv | Airflow 없음 |
+| 파생 이미지 | 베이스 + 사용자 requirements | §4.1의 캐시 키로 식별 |
+
+**Airflow는 파생 이미지에 포함하지 않는다.** §5의 `DockerOperator` 전환이 이 결합을
+끊는다. 자식 컨테이너는 Airflow의 존재를 모른다.
+
+**JupyterLab과 papermill은 도구 venv로 격리한다.** JupyterHub·Binder가 쓰는 표준 방식이다.
+
+- **사용자 환경**(site-packages): ML 스택 + 사용자 requirements + `ipykernel`
+- **도구 venv**(`/opt/prizm/tools`): jupyterlab, jupyter-server, papermill
+
+Jupyter 서버와 papermill은 도구 venv에서 실행되고, **커널만** 사용자 환경의 파이썬을
+가리킨다. 사용자 환경에 강제되는 Jupyter 의존성은 `ipykernel` 하나뿐이며 그 의존성
+그래프는 작고 안정적이다(traitlets, pyzmq, tornado). 따라서 사용자가 어떤 패키지를
+추가하든 편집 도구와 충돌하지 않는다.
+
+이 격리는 §4.3의 빌드에도 적용된다. `uv pip install`은 **사용자 환경에만** 설치하며 도구
+venv를 건드리지 않는다.
+
+### 4.7 전제: 코드 자산 영속화는 아직 없다
 
 현재 `prizm-backend`의 엔티티는 `Run` 하나뿐이고, 코드 자산은 `application.yml`에 설정으로
 바인딩된 단일 레코드(`CodeAssetProperties`)와 AI Hub의 JSON 카탈로그로만 존재한다. 포털의
@@ -201,6 +239,9 @@ Airflow 이미지에 구워져 있다.
 - **자격증명·엔드포인트**: `MLFLOW_TRACKING_URI`, `MLFLOW_S3_ENDPOINT_URL`, MinIO 키를
   자식 컨테이너 환경변수로 전달
 - **네트워크**: 자식 컨테이너가 mlflow·minio에 닿아야 하므로 동일 compose 네트워크에 참여
+- **의존성 분리 효과**: 이 전환으로 Airflow와 ML 런타임이 파이썬 환경을 공유할 이유가
+  사라진다(§4.6). 오케스트레이터 이미지에서 torch·ultralytics를, 런타임 이미지에서 Airflow를
+  각각 제거할 수 있다
 - **도커 소켓**: `DockerOperator`는 Airflow 컨테이너가 호스트 도커 소켓에 접근해야 한다.
   보안상 **프로토타입 한정**이며, 운영은 Kubernetes로 가야 하는 주된 이유다
 
@@ -249,13 +290,13 @@ Phase 2는 착수 전에 별도 spec으로 상세화한다. 여기서는 Phase 1
 - 편집 환경 내 터미널 접근
 - 사용자 정의 베이스 이미지 업로드 (베이스는 큐레이션된 12종으로 한정)
 - 코드 자산 카탈로그의 AI Hub 실데이터 연동 (별도 후속 과제)
-- 코드 자산 영속화와 등록 화면 연동 (별도 선행 과제, §4.6)
+- 코드 자산 영속화와 등록 화면 연동 (별도 선행 과제, §4.7)
 
 ## 9. 단계별 산출물
 
 | 단계 | 범위 | 완료 기준 |
 |---|---|---|
-| **Phase 1** | 환경 빌드 파이프라인 + Airflow 실행 통일 (등록 화면 연동은 제외, §4.6) | §5.3 |
+| **Phase 1** | 환경 빌드 파이프라인 + Airflow 실행 통일 (등록 화면 연동은 제외, §4.7) | §5.3 |
 | **Phase 2** | 편집 세션 + JupyterLab iframe + 드래프트/버전 저장 | 편집 버튼 → 즉시 화면 전환 → 캐시 히트 시 10초 내 커널 연결 → 셀 실행 → 새 버전 등록 → 그 버전으로 실행 성공 |
 
 Phase 1과 Phase 2는 각각 별도의 구현 계획서를 갖는다. 본 문서에 이어 작성할 구현 계획은
