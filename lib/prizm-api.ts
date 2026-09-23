@@ -66,6 +66,20 @@ function configuredApiBase(): string | undefined {
 export const PRIZM_API_BASE = configuredApiBase() || 'http://localhost:8081';
 export const MLFLOW_UI_BASE = 'http://localhost:5050';
 
+function configuredEditSessionRelayBase(): string | undefined {
+  try {
+    // 로컬 dev 전용 - scripts/edit-session-ws-relay.mjs가 떠 있을 때만 설정한다
+    // (vinext dev의 WebSocket 업그레이드 버그를 우회하는 보조 프로세스). 설정 안 하면
+    // 빈 문자열이 되어 app/edit/.../route.ts의 same-origin 프록시를 그대로 쓴다 -
+    // 이게 실제 배포에서 맞는 경로다.
+    return process.env.NEXT_PUBLIC_EDIT_SESSION_RELAY_BASE;
+  } catch {
+    return undefined;
+  }
+}
+
+export const EDIT_SESSION_RELAY_BASE = configuredEditSessionRelayBase() || '';
+
 export class PrizmApiError extends Error {}
 
 export async function createRun(input: CreateRunInput): Promise<Run> {

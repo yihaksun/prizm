@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -16,11 +17,13 @@ import {
   CheckSquare,
   ChevronDown,
   CircleHelp,
+  CircleSlash2,
   Clock3,
   Copy,
   Cpu,
   Database,
   Download,
+  ExternalLink,
   Eye,
   Factory,
   FileCode2,
@@ -37,11 +40,11 @@ import {
   Link2,
   MessageSquareText,
   MoreHorizontal,
+  PanelRightClose,
+  PanelRightOpen,
   PencilLine,
   Play,
   Plus,
-  Power,
-  Quote,
   RotateCcw,
   Rocket,
   Search,
@@ -51,6 +54,7 @@ import {
   SlidersHorizontal,
   Star,
   TerminalSquare,
+  ThumbsUp,
   Upload,
   Users,
   Workflow,
@@ -82,13 +86,15 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VisionMlopsDemo, type DemoStage } from '@/components/vision-mlops-demo';
 import { PortalWorkspaceTabs, type PortalTabId } from '@/components/portal-workspace-tabs';
 import { PortalButton, PortalDetailFrame, PortalFilterSurface, PortalPageFrame, PortalPageHeader, PortalPrismAtmosphere, PortalWorkspaceSurface } from '@/components/portal-page-primitives';
 import { AssetSdkDialog } from '@/components/asset-sdk-dialog';
 import { LiveRunDetail } from '@/components/live-run-detail';
-import { createRun, isFinishedRun, listRuns, PrizmApiError, type Run, type RunParameters } from '@/lib/prizm-api';
+import { createRun, EDIT_SESSION_RELAY_BASE, isFinishedRun, listRuns, PrizmApiError, type Run, type RunParameters } from '@/lib/prizm-api';
+import { createEditSession, registerEditSessionVersion, type EditSessionInfo } from '@/lib/edit-session-api';
 
 type NavGroup = {
   label: string;
@@ -205,6 +211,16 @@ function getVersionOptions(currentVersion: string) {
   ]));
 }
 
+function getVersionRegistration(version: string) {
+  const registeredAt: Record<string, string> = {
+    'v2.4.1': '2026.09.08 14:26',
+    'v2.4.0': '2026.08.29 11:04',
+    'v2.3.2': '2026.08.12 16:38',
+    'v2.3.1': '2026.08.09 09:17',
+  };
+  return { name: '이학선 책임매니저', team: '제조AI기술개발팀', registeredAt: registeredAt[version] ?? '2026.09.08 14:26' };
+}
+
 const myWorkGroups: NavGroup[] = [
   { label: '나의 작업', icon: CheckSquare, badge: 2, children: [{ label: '할 일', href: '/work/tasks' }, { label: '작업 이력', href: '/work/history' }] },
   { label: '즐겨찾기', icon: Star, children: [{ label: '즐겨찾는 과제', href: '/#flow' }, { label: '즐겨찾는 자산', href: '/assets/code' }] },
@@ -214,7 +230,7 @@ const platformGroups: NavGroup[] = [
   { label: '대시보드', icon: LayoutDashboard, children: [{ label: '홈', href: '/' }, { label: '오늘의 작업', href: '/#attention' }, { label: '거점 운영', href: '/#sites' }, { label: '파이프라인 현황', href: '/#execute' }, { label: '성과 근거', href: '/#evidence' }, { label: '재무 기여', href: '/#contribution' }] },
   { label: '과제관리', icon: Layers3, href: '/projects' },
   { label: '데이터관리', icon: Database, children: [{ label: '이미지 카탈로그', href: '/image-catalog/review' }, { label: '데이터 연결 매뉴얼', href: '/#assets' }] },
-  { label: '자산관리', icon: LibraryBig, active: true, children: [{ label: '모델 자산', href: '/assets/models' }, { label: '코드 자산', href: '/assets/code', current: true }, { label: '데이터 자산', href: '/assets/data' }, { label: '파이프라인 개발 매뉴얼', href: '/#flow' }, { label: 'SDK 매뉴얼', href: '/#flow' }] },
+  { label: '자산관리', icon: LibraryBig, active: true, children: [{ label: '모델 자산', href: '/assets/models' }, { label: '코드 자산', href: '/assets/code', current: true }, { label: '데이터 자산', href: '/assets/data' }, { label: '파이프라인 구성', href: '/assets/pipelines' }, { label: '파이프라인 개발 매뉴얼', href: '/#flow' }, { label: 'SDK 매뉴얼', href: '/#flow' }] },
   { label: '실행관리', icon: Workflow, children: [{ label: '실험 대시보드', href: '/assets/code?pipeline=1' }] },
   { label: '평가관리', icon: ShieldCheck, children: [{ label: '모델 평가', href: '/evaluation/models' }, { label: '자동 평가 기준 관리', href: '/#evidence' }] },
   { label: '배포관리', icon: Rocket, children: [{ label: '배포 현황', href: '/#sites' }, { label: '배포 요청', href: '/#attention' }, { label: '단계 승격', href: '/#attention' }, { label: '거점 확산', href: '/#sites' }, { label: '버전·롤백', href: '/#history' }] },
@@ -409,24 +425,90 @@ function NotebookThumbnail({ asset }: { asset: Pick<CodeAsset, 'preview' | 'prev
   );
 }
 
-function NotebookHtmlViewer({ version }: { version: string }) {
+function NotebookHtmlViewer() {
+  const [frameHeight, setFrameHeight] = useState(1600);
+  const frameObserver = useRef<ResizeObserver | null>(null);
+  useEffect(() => () => frameObserver.current?.disconnect(), []);
+  const resizeFrame = (frame: HTMLIFrameElement) => {
+    frameObserver.current?.disconnect();
+    const doc = frame.contentDocument;
+    if (!doc?.body) return;
+    doc.documentElement.style.overflow = 'hidden';
+    doc.body.style.overflow = 'hidden';
+    if (!doc.getElementById('prizm-reader-style')) {
+      const style = doc.createElement('style');
+      style.id = 'prizm-reader-style';
+      style.textContent = `.jp-Notebook{width:100%;max-width:none;padding:0 0 64px}.nb-meta{margin-bottom:36px;padding:3px 0 14px;font-size:12px;flex-wrap:wrap;gap:6px}.jp-MarkdownOutput{padding-left:0}.cell-tag,.callout{margin-left:0}h1{font-size:25px;letter-spacing:-.025em}h2{margin-top:42px;font-size:20px;letter-spacing:-.02em}.jp-MarkdownOutput p{font-size:14px;line-height:1.78}.jp-Cell{min-width:0;margin-bottom:28px}.jp-InputArea,.jp-OutputArea-child{display:grid;grid-template-columns:48px minmax(0,1fr)}.jp-OutputArea{display:block;min-width:0;margin-top:8px}.jp-InputPrompt,.jp-OutputPrompt{padding-top:11px;color:#61788a}.jp-CodeMirrorEditor{overflow-x:auto;scrollbar-width:thin;background:#f7f7f8;border:1px solid #e0e4e8;border-radius:10px;box-shadow:none}.jp-CodeMirrorEditor pre{padding:15px 17px;white-space:pre;overflow-wrap:normal;line-height:1.62}.jp-OutputArea-output{min-width:0;max-width:100%;overflow-x:auto;scrollbar-width:thin}.jp-OutputArea-output table{white-space:nowrap;border-color:#e0e4e8}.jp-OutputArea-output pre{padding:12px 14px;background:#fafafa;border-radius:8px}.jp-CodeMirrorEditor::-webkit-scrollbar,.jp-OutputArea-output::-webkit-scrollbar{height:6px}.jp-CodeMirrorEditor::-webkit-scrollbar-thumb,.jp-OutputArea-output::-webkit-scrollbar-thumb{background:#c5ced7;border-radius:4px}pre{font-size:13px}.jp-OutputArea-output img,.jp-OutputArea-output svg{max-width:100%;height:auto}.callout{border-radius:8px}.prediction-card{border-radius:8px;box-shadow:none}@media(max-width:500px){.jp-InputArea,.jp-OutputArea-child{grid-template-columns:36px minmax(0,1fr)}.jp-InputPrompt,.jp-OutputPrompt{font-size:10px;padding-right:4px}.jp-OutputArea-output{padding:8px 0}.nb-meta{display:grid;gap:4px}.prediction-grid{grid-template-columns:1fr}}`;
+      style.textContent += `
+        body { color:#25282c; font-size:14px; line-height:1.75; }
+        .nb-meta { display:none; }
+        .jp-Notebook { padding:0 0 64px; }
+        .jp-MarkdownOutput { padding-left:48px; }
+        .jp-MarkdownOutput h1 { font-size:24px; font-weight:600; line-height:1.5; margin:0 0 24px; }
+        .jp-MarkdownOutput h2 { border:0; padding:0; margin:42px 0 24px; font-size:22px; font-weight:550; line-height:1.5; }
+        .jp-MarkdownOutput p { margin:14px 0; font-size:14px; line-height:1.8; }
+        .jp-Cell { margin-bottom:32px; }
+        .jp-CodeMirrorEditor { border:1px solid #dedfe2; border-radius:7px; background:#f3f4f5; }
+        .jp-CodeMirrorEditor pre { padding:16px; font-size:13px; line-height:1.75; white-space:pre-wrap; overflow-wrap:anywhere; }
+        .jp-InputPrompt,.jp-OutputPrompt { color:#767b80; font-size:11px; padding:14px 8px 0 0; }
+        .cell-tag { margin:0 0 7px 48px; border:0; padding:0; background:transparent; color:#8a8f94; font-size:10px; }
+        .cell-tag.is-injected { background:transparent; color:#8a8f94; }
+        .kw { color:#16732d; } .str { color:#b63e3e; } .fn { color:#30383e; } .num { color:#27648b; } .cm { color:#8b9095; }
+        .jp-OutputArea-output { padding:12px 0; }
+        .jp-OutputArea-output pre { background:transparent; border:0; padding:0; }
+        .callout { margin-left:48px; padding:8px 0; border:0; background:transparent; color:#52685d; }
+        .chart,.gate { border:0; background:transparent; }
+        .gate { padding:12px 0; }
+        @media(max-width:500px) { .jp-MarkdownOutput { padding-left:36px; } .cell-tag,.callout { margin-left:36px; } .jp-MarkdownOutput h1 { font-size:21px; } .jp-MarkdownOutput h2 { font-size:19px; } }
+      `;
+      doc.head.appendChild(style);
+    }
+    const measure = () => setFrameHeight(Math.ceil(doc.body.getBoundingClientRect().height) + 2);
+    frameObserver.current = new ResizeObserver(measure);
+    frameObserver.current.observe(doc.body);
+    measure();
+  };
   return (
     <section className="notebook-html-shell">
-      <header className="notebook-html-toolbar">
-        <div><span>HTML 변환본</span><strong>weld-training-{version}.ipynb</strong><small>읽기 전용 · 출력 포함</small></div>
-        <a href="/notebooks/weld-training-v2.4.1-reader.html" target="_blank" rel="noreferrer">새 창에서 보기 <ArrowUpRight size={13} /></a>
-      </header>
       <iframe
         className="notebook-html-frame"
         src="/notebooks/weld-training-v2.4.1.html"
         title="차체 용접 비드 결함 검출 모델 학습 Notebook"
-        sandbox=""
+        sandbox="allow-same-origin"
+        style={{ height: `${frameHeight}px` }}
+        onLoad={(event) => resizeFrame(event.currentTarget)}
       />
     </section>
   );
 }
 
-function PackageView() {
+function DiscussionView({ helpfulCount, markedHelpful, onToggleHelpful }: { helpfulCount: number; markedHelpful: boolean; onToggleHelpful: () => void }) {
+  return <section className="code-discussion-panel">
+    <header><div><span>COMMUNITY REVIEW</span><h3>디스커션과 활용 평가</h3><p>질문, 재현 결과와 현장 적용 경험을 코드 자산에 남깁니다.</p></div><button type="button"><MessageSquareText size={15} /> 새 글 작성</button></header>
+    <div className="code-discussion-summary"><button type="button" className={markedHelpful ? 'code-helpful-entry is-active' : 'code-helpful-entry'} onClick={onToggleHelpful} aria-pressed={markedHelpful}><ThumbsUp size={20} fill={markedHelpful ? 'currentColor' : 'none'} /><strong>{helpfulCount}</strong><span>이 코드가 도움이 됐어요</span></button><div><strong>18</strong><span>디스커션</span></div></div>
+    <div className="code-discussion-list"><article><span>재현 결과</span><div><strong>울산 차체 3라인 데이터에도 재현됐습니다</strong><p>동일 실행 환경에서 mAP50 0.961을 확인했습니다. 조도 보정 파라미터만 현장 기준으로 조정했습니다.</p><small>박지윤 책임매니저 · 울산 차체품질팀 · 2일 전</small></div></article><article><span>질문</span><div><strong>야간 이미지의 권장 confidence 기준이 궁금합니다</strong><p>저조도 구간만 별도 threshold를 적용할 때 운영 기준을 공유해 주세요.</p><small>김서현 매니저 · 제조AI기술개발팀 · 5일 전</small></div></article></div>
+  </section>;
+}
+
+// Both detail tabs share the same rail geometry and responsive behavior.
+function CodeDetailSplit({ panelOpen, children, panel, className = '' }: {
+  panelOpen: boolean; children: ReactNode; panel: ReactNode; className?: string;
+}) {
+  return <div className={`code-detail-split ${className}${panelOpen ? '' : ' is-panel-collapsed'}`}>
+    {children}
+    {panelOpen && panel}
+  </div>;
+}
+
+function CodeDetailRail({ children, className = '', label }: {
+  children: ReactNode; className?: string; label: string;
+}) {
+  return <aside className={`code-detail-rail ${className}`} aria-label={label}>{children}</aside>;
+}
+
+function PackageView({ panelOpen }: { panelOpen: boolean }) {
+  const [packageSearch, setPackageSearch] = useState('');
+  const [requirementsCopied, setRequirementsCopied] = useState(false);
   const packages = [
     ['torch', '==2.4.0', '2.4.0+cu124', 'PyPI', '호환'],
     ['torchvision', '==0.19.0', '0.19.0+cu124', 'PyPI', '호환'],
@@ -438,39 +520,104 @@ function PackageView() {
     ['mlflow', '==3.4.0', '3.4.0', '사내 저장소', '호환'],
     ['prizm-sdk', '==2.8.4', '2.8.4', '사내 저장소', '호환'],
   ];
-  const requirements = `torch==2.4.0\ntorchvision==0.19.0\nultralytics==8.3.14\nopencv-python-headless==4.10.0.84\nnumpy>=1.26,<2.0\npandas==2.2.2\npyyaml==6.0.2\nmlflow==3.4.0\nprizm-sdk==2.8.4`;
+  const requirementRows = packages.map(([name, requested]) => [name, requested]);
+  const requirements = requirementRows.map(([name, requested]) => `${name}${requested}`).join('\n');
+  const normalizedSearch = packageSearch.trim().toLowerCase();
+  const filteredPackages = normalizedSearch
+    ? packages.filter((item) => item.some((value) => value.toLowerCase().includes(normalizedSearch)))
+    : packages;
+  const copyRequirements = async () => {
+    try {
+      await navigator.clipboard.writeText(requirements);
+      setRequirementsCopied(true);
+      window.setTimeout(() => setRequirementsCopied(false), 1800);
+    } catch {
+      setRequirementsCopied(false);
+    }
+  };
+  const downloadRequirements = () => {
+    const blob = new Blob([requirements], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'requirements.txt';
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <section className="package-view">
-      <header className="package-summary">
-        <div><span>PYTHON</span><strong>3.11.9</strong><small>CPython · linux/amd64</small></div>
-        <div><span>등록 패키지</span><strong>9</strong><small>직접 의존성</small></div>
-        <div><span>확정 패키지</span><strong>187</strong><small>실행 시점 전체 목록</small></div>
-        <div className="is-passed"><span>환경 호환성</span><strong><Check size={16} /> 통과</strong><small>pytorch-2.4-yolo12-py311-cu124</small></div>
-      </header>
-      <div className="package-main">
-        <div className="package-list-panel">
-          <header><div><span className="detail-section-label">RESOLVED PACKAGES</span><h3>설치 패키지</h3></div><small>RUN-26841에서 확정 · 2026.09.08</small></header>
-          <table className="package-table"><thead><tr><th>패키지</th><th>요청 버전</th><th>설치 버전</th><th>출처</th><th>상태</th></tr></thead><tbody>{packages.map((item) => <tr key={item[0]}><td><strong>{item[0]}</strong></td><td><code>{item[1]}</code></td><td><code>{item[2]}</code></td><td>{item[3]}</td><td><span className="package-status"><Check size={11} />{item[4]}</span></td></tr>)}</tbody></table>
+    <section className={panelOpen ? 'package-view' : 'package-view is-panel-collapsed'}>
+      <CodeDetailSplit panelOpen={panelOpen} className="package-main" panel={
+        <CodeDetailRail className="requirements-panel" label="requirements.txt">
+          <header className="reader-rail-heading">
+            <h3>requirements.txt</h3>
+            <p className="requirements-count"><span>직접 의존성</span><strong>9개</strong></p>
+            <div className="reader-runtime-actions">
+              <button type="button" onClick={copyRequirements} aria-label="requirements.txt 클립보드 복사"><Copy size={14} /> {requirementsCopied ? '복사됨' : '클립보드 복사'}</button>
+              <button type="button" className="is-primary" onClick={downloadRequirements} aria-label="requirements.txt 다운로드"><Download size={14} /> 다운로드</button>
+            </div>
+          </header>
+          <pre className="requirements-file-preview" aria-label="requirements.txt 미리보기">{requirements}</pre>
+          <p className="requirements-panel-note">등록 시 첨부된 직접 의존성입니다. 실제 실행 환경에는 기본 이미지와 전이 의존성이 함께 포함됩니다.</p>
+        </CodeDetailRail>
+      }>
+        <div className="package-content-column">
+          <header className="package-summary">
+            <div><span>PYTHON</span><strong>3.11.9</strong><small>CPython · linux/amd64</small></div>
+            <div><span>등록 패키지</span><strong>9</strong><small>직접 의존성</small></div>
+            <div><span>확정 패키지</span><strong>187</strong><small>실행 시점 전체 목록</small></div>
+            <div className="is-passed"><span>환경 호환성</span><strong><Check size={16} /> 통과</strong><small>pytorch-2.4-yolo12-py311-cu124</small></div>
+          </header>
+          <div className="package-list-panel">
+            <label className="package-search" aria-label="설치 패키지 검색">
+              <Search size={15} />
+              <input value={packageSearch} onChange={(event) => setPackageSearch(event.target.value)} placeholder="패키지명, 버전, 출처로 검색" />
+              {packageSearch && <button type="button" onClick={() => setPackageSearch('')} aria-label="검색어 지우기"><X size={14} /></button>}
+            </label>
+            <table className="package-table"><thead><tr><th>패키지</th><th>요청 버전</th><th>설치 버전</th><th>출처</th><th>상태</th></tr></thead><tbody>{filteredPackages.map((item) => <tr key={item[0]}><td><strong>{item[0]}</strong></td><td><code>{item[1]}</code></td><td><code>{item[2]}</code></td><td>{item[3]}</td><td><span className="package-status"><Check size={11} />{item[4]}</span></td></tr>)}</tbody></table>
+            {!filteredPackages.length && <div className="package-empty">검색 조건에 맞는 설치 패키지가 없습니다.</div>}
+          </div>
         </div>
-        <aside className="requirements-panel">
-          <header><div><span>원본 파일</span><strong>requirements.txt</strong></div><b>8 PACKAGES</b></header>
-          <pre><code>{requirements}</code></pre>
-          <div className="requirements-note"><ShieldCheck size={16} /><span><strong>재현 가능한 환경</strong><small>요청 범위와 실제 설치 버전을 함께 보존합니다.</small></span></div>
-        </aside>
-      </div>
+      </CodeDetailSplit>
     </section>
   );
 }
 
-function VersionHistory() {
+function VersionHistory({ currentVersion, panelOpen }: { currentVersion: string; panelOpen: boolean }) {
   const rows = [
-    ['v2.4.1', '재현 확인', '클래스 가중치 조정 및 검증 데이터 v5 반영', '김민준', '2026.09.08'],
-    ['v2.4.0', '재현 확인', '입력 해상도 1024px 상향, Augmentation 개선', '김민준', '2026.08.29'],
-    ['v2.3.2', '운영 승인', '울산 차체 2라인 운영 기준 버전', '박서연', '2026.08.12'],
-    ['v2.3.1', '사전 점검', '라벨 매핑 오류 수정', '김민준', '2026.08.09'],
+    { version: 'v2.4.1', verified: '재현 확인', summary: '클래스 가중치 조정 및 검증 데이터 v5 반영', owner: '김민준 책임매니저', department: '제조AI기술개발팀', date: '2026.09.08 14:26', changes: ['클래스별 손실 가중치 조정', '검증 데이터셋 v5 연결', '학습 파라미터 재현성 확인'] },
+    { version: 'v2.4.0', verified: '재현 확인', summary: '입력 해상도 1024px 상향, Augmentation 개선', owner: '김민준 책임매니저', department: '제조AI기술개발팀', date: '2026.08.29 10:18', changes: ['입력 해상도 1024px 적용', 'Mosaic 증강 범위 조정', 'GPU 메모리 사용량 최적화'] },
+    { version: 'v2.3.2', verified: '운영 승인', summary: '울산 차체 2라인 운영 기준 버전', owner: '박서연 책임매니저', department: '울산 품질기술팀', date: '2026.08.12 16:40', changes: ['운영 임계값 0.72 확정', '차체 2라인 카메라 규격 반영', '운영 승인 결과 연결'] },
+    { version: 'v2.3.1', verified: '사전 점검', summary: '라벨 매핑 오류 수정', owner: '김민준 책임매니저', department: '제조AI기술개발팀', date: '2026.08.09 09:32', changes: ['Crack·Porosity 라벨 매핑 수정', '데이터 검증 규칙 재실행', '오류 샘플 184건 재학습'] },
   ];
-  return <div className="detail-table-wrap"><table className="detail-table"><thead><tr><th>버전</th><th>검증</th><th>변경 내용</th><th>등록자</th><th>등록일</th><th aria-label="버전 메뉴" /></tr></thead><tbody>{rows.map((row) => <tr key={row[0]}><td><strong>{row[0]}</strong></td><td><TrustStatus status={row[1] as CodeAsset['verified']} /></td><td>{row[2]}</td><td>{row[3]}</td><td>{row[4]}</td><td><button type="button" aria-label={`${row[0]} 버전 메뉴`}><MoreHorizontal size={16} /></button></td></tr>)}</tbody></table></div>;
+  const normalizedCurrent = currentVersion.startsWith('v') ? currentVersion : `v${currentVersion}`;
+  const [selectedVersion, setSelectedVersion] = useState(normalizedCurrent);
+  useEffect(() => setSelectedVersion(normalizedCurrent), [normalizedCurrent]);
+  const selected = rows.find((row) => row.version === selectedVersion) ?? rows[0];
+
+  return <CodeDetailSplit panelOpen={panelOpen} className="version-history-layout" panel={
+    <CodeDetailRail className="version-history-rail" label={`${selected.version} 변경 상세`}>
+      <section className="notebook-run-summary version-detail-summary">
+        <header className="reader-runtime-heading"><h3>버전 상세</h3></header>
+        <dl>
+          <div><dt>버전</dt><dd>{selected.version}{selected.version === normalizedCurrent && <span className="current-version-label">현재</span>}</dd></div>
+          <div><dt>검증</dt><dd className="is-ready">{selected.verified}</dd></div>
+          <div><dt>등록자</dt><dd>{selected.owner}</dd></div>
+          <div><dt>등록일</dt><dd>{selected.date.split(' ')[0]}</dd></div>
+        </dl>
+      </section>
+      <section className="notebook-context-assets version-change-detail">
+        <h3>변경 내용</h3>
+        <p>{selected.summary}</p>
+        <ul>{selected.changes.map((change) => <li key={change}><Check size={13} />{change}</li>)}</ul>
+        <small>{selected.department}</small>
+      </section>
+    </CodeDetailRail>
+  }>
+    <div className="detail-table-wrap version-history-table-wrap">
+      <table className="detail-table version-history-table"><thead><tr><th>버전</th><th>검증</th><th>변경 내용</th><th>등록자</th><th>등록일</th></tr></thead><tbody>{rows.map((row) => <tr className={row.version === selected.version ? 'is-selected' : ''} key={row.version} onClick={() => setSelectedVersion(row.version)}><td><button type="button" className="version-history-link" aria-pressed={row.version === selected.version}>{row.version}{row.version === normalizedCurrent && <span>현재</span>}</button></td><td><TrustStatus status={row.verified as CodeAsset['verified']} /></td><td>{row.summary}</td><td>{row.owner.replace(' 책임매니저', '')}</td><td>{row.date.split(' ')[0]}</td></tr>)}</tbody></table>
+    </div>
+  </CodeDetailSplit>;
 }
 
 function RunHistory({ onOpenRun }: { onOpenRun: () => void }) {
@@ -480,7 +627,9 @@ function RunHistory({ onOpenRun }: { onOpenRun: () => void }) {
     ['RUN-26422', '중단', 'v2.4.0', 'Weld Image 2026 Q3 · v11', 'pytorch-2.4-vision-py312-cu124', 'ml.a100.10gb', '김민준', '38m'],
     ['RUN-26190', '성공', 'v2.3.2', 'Weld Image 2026 Q2 · v8', 'Ubuntu 20.04 · PyTorch', 'ml.a100.20gb', '박서연', '1h 51m'],
   ];
-  return <div className="detail-table-wrap"><table className="detail-table run-history-table"><thead><tr><th>실행 ID</th><th>상태</th><th>코드</th><th>입력 데이터</th><th>실행 환경</th><th>실행 자원</th><th>실행자</th><th>소요시간</th><th aria-label="실행 상세" /></tr></thead><tbody>{rows.map((row, index) => <tr key={row[0]}><td><button type="button" className="run-link" onClick={index === 0 ? onOpenRun : undefined}>{row[0]}</button></td><td><span className={`run-state state-${row[1]}`}><i />{row[1]}</span></td>{row.slice(2).map((cell) => <td key={cell}>{cell}</td>)}<td><ArrowUpRight size={14} /></td></tr>)}</tbody></table></div>;
+  return <div className="detail-table-wrap">
+    <table className="detail-table run-history-table"><thead><tr><th>실행 ID</th><th>상태</th><th>코드</th><th>입력 데이터</th><th>실행 환경</th><th>실행 자원</th><th>실행자</th><th>소요시간</th><th aria-label="실행 상세" /></tr></thead><tbody>{rows.map((row, index) => <tr key={row[0]}><td><button type="button" className="run-link" onClick={index === 0 ? onOpenRun : undefined}>{row[0]}</button></td><td><span className={`run-state state-${row[1]}`}><i />{row[1]}</span></td>{row.slice(2).map((cell) => <td key={cell}>{cell}</td>)}<td><ArrowUpRight size={14} /></td></tr>)}</tbody></table>
+  </div>;
 }
 
 function LineageView() {
@@ -492,7 +641,7 @@ function LineageView() {
     { type: 'MODEL', title: 'WeldNet', meta: 'v2.4.1 · Candidate', icon: Box },
     { type: 'DEPLOYMENT', title: '울산 차체 2라인', meta: '운영 v2.3.2', icon: Rocket },
   ];
-  return <div className="lineage-panel"><header><div><span>ACTIVE LINEAGE</span><h3>코드에서 현장 운영까지</h3></div><button type="button"><Share2 size={14} /> 전체 화면</button></header><div className="lineage-track">{nodes.map((node, index) => <div className="lineage-step" key={node.type}><div className="lineage-node"><node.icon size={18} /><span>{node.type}</span><strong>{node.title}</strong><small>{node.meta}</small></div>{index < nodes.length - 1 && <i className="lineage-connector"><ArrowRight size={14} /></i>}</div>)}</div><div className="related-notebooks"><span>연관 자산</span><a href="/assets/data?asset=PRJ000212-D-0001">데이터 · 용접 비드 결함 데이터셋 v13 <ArrowRight size={13} /></a><a href="/evaluation/models">평가 · 용접 비드 결함 모델 평가 <ArrowRight size={13} /></a><a href="/assets/models">모델 · Weld Detector v2.5.0 <ArrowRight size={13} /></a></div></div>;
+  return <div className="lineage-panel"><header><div><span>ACTIVE LINEAGE</span><h3>코드에서 현장 운영까지</h3></div><button type="button"><Share2 size={14} /> 전체 화면</button></header><div className="lineage-track">{nodes.map((node, index) => <div className="lineage-step" key={node.type}><div className={node.type === 'CODE' ? `lineage-node is-${node.type.toLowerCase()} is-current` : `lineage-node is-${node.type.toLowerCase()}`}><node.icon size={18} /><span>{node.type}{node.type === 'CODE' && <b className="lineage-current-tag">현재 보는 자산</b>}</span><strong>{node.title}</strong><small>{node.meta}</small></div>{index < nodes.length - 1 && <i className="lineage-connector"><ArrowRight size={14} /></i>}</div>)}</div><div className="related-notebooks"><span>연관 자산</span><a href="/assets/data?asset=PRJ000212-D-0001">데이터 · 용접 비드 결함 데이터셋 v13 <ArrowRight size={13} /></a><a href="/evaluation/models">평가 · 용접 비드 결함 모델 평가 <ArrowRight size={13} /></a><a href="/assets/models">모델 · Weld Detector v2.5.0 <ArrowRight size={13} /></a></div></div>;
 }
 
 function AccessView({ requested, onRequest }: { requested: boolean; onRequest: () => void }) {
@@ -580,6 +729,8 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
   const [view, setView] = useState<'list' | 'grid'>('grid');
   const [sortMode, setSortMode] = useState<'관련도순' | '최근 수정순' | '재사용순'>('관련도순');
   const [executionOpen, setExecutionOpen] = useState(false);
+  const [editSession, setEditSession] = useState<EditSessionInfo | null>(null);
+  const [editSessionLoading, setEditSessionLoading] = useState(false);
   const [preflightPassed, setPreflightPassed] = useState(false);
   const [preflightRunning, setPreflightRunning] = useState(false);
   const [executionResource, setExecutionResource] = useState('a100-20');
@@ -617,11 +768,31 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
   const [sdkOpen, setSdkOpen] = useState(false);
   const [downloadCount, setDownloadCount] = useState(286);
   const [citationCount, setCitationCount] = useState(47);
-  const [userRating, setUserRating] = useState(0);
+  const [helpfulCount, setHelpfulCount] = useState(94);
+  const [markedHelpful, setMarkedHelpful] = useState(false);
+  const [notebookPanelOpen, setNotebookPanelOpen] = useState(true);
+  const [detailScrolled, setDetailScrolled] = useState(false);
+  const [activeNotebookSection, setActiveNotebookSection] = useState('overview');
   const [runsFetched, setRunsFetched] = useState(false);
   const runNotebookFrameRef = useRef<HTMLIFrameElement>(null);
+  const detailHeaderRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (screen !== 'detail') {
+      setDetailScrolled(false);
+      return;
+    }
+    const header = detailHeaderRef.current;
+    if (!header) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setDetailScrolled(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    }, { rootMargin: '-112px 0px 0px 0px' });
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [screen]);
 
   const selectedAsset = assets.find((asset) => asset.id === selectedAssetId) ?? assets[0];
+  const versionRegistration = getVersionRegistration(selectedVersion);
   // URL/deep-link(?run=)로 지정된 실행이 아직 runRecords에 없을 수 있다. 이 경우 mock으로 대체하지 않고
   // undefined로 두어 화면에서 로딩/찾을 수 없음 상태를 명시한다 (findings: 가짜 결과 노출 방지).
   const activeRun = runRecords.find((run) => run.id === activeRunId);
@@ -651,7 +822,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
         const asset = initialAssets.find((item) => item.id === assetId);
         setSelectedAssetId(assetId);
         if (asset) setSelectedVersion(params.get('version') ?? asset.version);
-        if (['notebook', 'packages', 'versions', 'runs', 'lineage', 'access'].includes(params.get('tab') ?? '')) setDetailTab(params.get('tab')!);
+        if (['notebook', 'packages', 'versions', 'runs', 'lineage', 'discussion', 'access'].includes(params.get('tab') ?? '')) setDetailTab(params.get('tab')!);
         setScreen('detail');
         setOpenWorkspaceTabs((current) => {
           const next = dataId && !current.includes('data') ? [...current, 'data' as const] : current;
@@ -701,6 +872,27 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
     return () => window.clearInterval(timer);
   }, [hasActiveMockRuns]);
 
+  useEffect(() => {
+    if (screen !== 'detail' || detailTab !== 'notebook') return;
+    const sectionIds = ['overview', 'data', 'training', 'test-output', 'evaluation'];
+    const syncSection = () => {
+      const frame = document.querySelector<HTMLIFrameElement>('.code-detail-page .notebook-html-frame');
+      if (!frame?.contentDocument) return;
+      const frameTop = frame.getBoundingClientRect().top + window.scrollY;
+      const marker = window.scrollY + 180;
+      let current = sectionIds[0];
+      for (const id of sectionIds) {
+        const section = frame.contentDocument.getElementById(id);
+        const sectionTop = section && frame.contentWindow ? section.getBoundingClientRect().top + frame.contentWindow.scrollY : 0;
+        if (section && frameTop + sectionTop <= marker) current = id;
+      }
+      setActiveNotebookSection(current);
+    };
+    const timer = window.setTimeout(syncSection, 250);
+    window.addEventListener('scroll', syncSection, { passive: true });
+    return () => { window.clearTimeout(timer); window.removeEventListener('scroll', syncSection); };
+  }, [screen, detailTab]);
+
   const focusRunNotebookOutput = () => {
     const frame = runNotebookFrameRef.current;
     const output = frame?.contentDocument?.getElementById('test-output');
@@ -708,6 +900,16 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
       ? output.getBoundingClientRect().top + frame.contentWindow.scrollY
       : 0;
     frame?.contentWindow?.scrollTo({ top: Math.max(0, targetTop - 20), behavior: 'auto' });
+  };
+
+  const scrollToNotebookSection = (sectionId: string) => {
+    const frame = document.querySelector<HTMLIFrameElement>('.code-detail-page .notebook-html-frame');
+    const section = frame?.contentDocument?.getElementById(sectionId);
+    if (!frame || !section) return;
+    setActiveNotebookSection(sectionId);
+    const frameTop = frame.getBoundingClientRect().top + window.scrollY;
+    const sectionTop = frame.contentWindow ? section.getBoundingClientRect().top + frame.contentWindow.scrollY : 0;
+    window.scrollTo({ top: frameTop + sectionTop - 112, behavior: 'smooth' });
   };
 
   const filteredAssets = useMemo(() => {
@@ -748,10 +950,58 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
     }
   };
 
+  const copyAssetId = async () => {
+    try {
+      await navigator.clipboard.writeText(selectedAsset.id);
+      setNotice(`${selectedAsset.id}를 클립보드에 복사했습니다.`);
+    } catch {
+      setNotice('코드 자산 번호를 복사하지 못했습니다.');
+    }
+  };
+
   const downloadAsset = () => {
     setDownloadCount((count) => count + 1);
     setNotice(`${selectedAsset.title} ${selectedVersion} 다운로드를 준비합니다.`);
   };
+
+  const toggleHelpful = () => {
+    const next = !markedHelpful;
+    setMarkedHelpful(next);
+    setHelpfulCount((count) => count + (next ? 1 : -1));
+    setNotice(next ? '이 코드가 도움이 됐다고 표시했습니다.' : '표시를 취소했습니다.');
+  };
+
+  const editSessionUrl = (session: EditSessionInfo) =>
+    session.notebookFilename
+      ? `${EDIT_SESSION_RELAY_BASE}/edit/${session.sessionId}/doc/tree/${encodeURIComponent(session.notebookFilename)}`
+      : `${EDIT_SESSION_RELAY_BASE}/edit/${session.sessionId}/lab`;
+
+  const openEditSession = async () => {
+    setEditSessionLoading(true);
+    setEditSession(null);
+    try {
+      const session = await createEditSession(selectedAsset.id, selectedVersion);
+      if (session.status !== 'READY') {
+        setNotice(session.errorMessage ?? '편집 환경을 준비하지 못했습니다.');
+        return;
+      }
+      setEditSession(session);
+      window.open(editSessionUrl(session), '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : '편집 세션을 열지 못했습니다.');
+    } finally {
+      setEditSessionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!editSession) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setEditSession(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [editSession]);
 
   const openAsset = (id: string) => {
     const asset = assets.find((item) => item.id === id);
@@ -948,7 +1198,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
   return (
     <SidebarProvider style={{ '--sidebar-width': '248px' } as CSSProperties}>
       <PortalNavigation screen={screen} demoStage={currentDemoStage} />
-      <PortalWorkspaceSurface>
+      <PortalWorkspaceSurface className={screen === 'detail' ? 'code-detail-workspace' : undefined}>
         <CodeAssetsTopbar />
         <PortalWorkspaceTabs current={currentMenuTab} />
         {!visionDemoOpen && (screen === 'catalog' || screen === 'detail') && <PortalPrismAtmosphere />}
@@ -1024,78 +1274,116 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
           </section>
         </PortalPageFrame>}
 
-        {!visionDemoOpen && screen === 'detail' && <PortalDetailFrame className="code-detail-page">
-          <button className="detail-back" type="button" onClick={openCatalog}><ArrowLeft size={15} /> 코드 자산</button>
-          <header className="code-detail-header">
+        {!visionDemoOpen && screen === 'detail' && <PortalDetailFrame className="code-detail-page code-reader-page">
+          <header className="code-detail-header" ref={detailHeaderRef}>
             <div className="code-detail-title">
-              <span className="detail-project-name">{selectedAsset.project}</span>
-              <div className="detail-title-row"><h1>{selectedAsset.title}</h1><span className="detail-readiness-badge" title="실행 준비 상태: 재현 확인 완료 · 2026.09.08 · RUN-26841" aria-label="실행 준비 상태: 재현 확인 완료"><ShieldCheck size={15} /></span></div>
-              <p>{selectedAsset.plant} / {selectedAsset.process} · {selectedAsset.owner}</p>
-              <div className="detail-identity-row">
-                <span className={`code-role role-${selectedAsset.role}`}>{selectedAsset.role}</span><TrustStatus status={selectedAsset.verified} />
-                <span className="detail-asset-id">{selectedAsset.id}</span>
-                <span className="detail-usage-signals" aria-label="코드 자산 활용 현황">
-                  <span title="조회수"><Eye size={12} /><b>1,248</b></span>
-                  <span title="다운로드 수"><Download size={12} /><b>{downloadCount}</b></span>
-                  <span title="인용·공유 수"><Quote size={12} /><b>{citationCount}</b></span>
-                  <span className="is-rating" title="별점"><Star size={12} fill="currentColor" /><b>4.8</b></span>
-                  <span title="즐겨찾기·구독 수"><Bookmark size={12} /><b>{selectedAsset.favorite ? 94 : 93}</b></span>
-                </span>
-                <label className="detail-version-control">
-                  <span>버전</span>
-                  <span className="detail-version-native"><select value={selectedVersion} onChange={(event) => { setSelectedVersion(event.target.value); updateCodeDetailUrl(detailTab, event.target.value); setNotice(`${event.target.value} 버전을 불러왔습니다.`); }} aria-label="코드 버전 선택">{getVersionOptions(selectedAsset.version).map((version) => <option value={version} key={version}>{version}{version === selectedAsset.version ? ' · 최신' : ''}</option>)}</select><ChevronDown size={13} /></span>
-                </label>
+              <div className="reader-project-row">
+                <button className="detail-back" type="button" onClick={openCatalog} aria-label="코드 자산 목록으로 돌아가기" title="코드 자산 목록으로 돌아가기"><ArrowLeft size={18} /></button>
+                <span className="detail-project-name">{selectedAsset.plant}공장</span><i>/</i><span className="detail-project-name">{selectedAsset.project}</span>
+              </div>
+              <div className="detail-title-row">
+                <h1>{selectedAsset.title}</h1>
+                <button type="button" className="reader-asset-id-badge" onClick={copyAssetId} title="클릭하여 코드 자산 번호 복사" aria-label={`${selectedAsset.id} 클립보드에 복사`}>{selectedAsset.id}</button>
+              </div>
+              <div className="reader-registration-usage-row">
+                <div className="reader-version-registration">
+                  <strong>{versionRegistration.name}</strong><i /><span>{versionRegistration.team}</span><i /><time>{versionRegistration.registeredAt} 등록</time>
+                  <label className="detail-version-control">
+                    <span className="detail-version-native"><select value={selectedVersion} onChange={(event) => { setSelectedVersion(event.target.value); updateCodeDetailUrl(detailTab, event.target.value); setNotice(`${event.target.value} 버전을 불러왔습니다.`); }} aria-label="코드 버전 선택">{getVersionOptions(selectedAsset.version).map((version) => <option value={version} key={version}>{version}{version === selectedAsset.version ? ' · 최신' : ''}</option>)}</select><ChevronDown size={13} /></span>
+                  </label>
+                </div>
+              </div>
+              <div className="reader-metadata-usage-row">
+                <div className="reader-metadata" aria-label="코드 자산 메타정보">
+                  <span>{selectedAsset.role}</span><span>{selectedAsset.plant} · {selectedAsset.process}</span><span>{selectedAsset.dataType}</span><span>Object Detection</span><span>{selectedAsset.framework} · YOLO 12</span>
+                </div>
+                <div className="detail-usage-signals" aria-label="코드 자산 활용 현황">
+                  <TooltipProvider delay={200}>
+                    <Tooltip><TooltipTrigger render={<span tabIndex={0} aria-label="조회수 1,248"><Eye size={13} /><b>1,248</b></span>} /><TooltipContent side="bottom">조회수 1,248</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger render={<span tabIndex={0} aria-label={`다운로드 수 ${downloadCount}`}><Download size={13} /><b>{downloadCount}</b></span>} /><TooltipContent side="bottom">다운로드 수 {downloadCount}</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger render={<span tabIndex={0} aria-label={`이 코드로 시작한 자산 수 ${citationCount}`}><GitFork size={13} /><b>{citationCount}</b></span>} /><TooltipContent side="bottom">이 코드로 시작 {citationCount}</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger render={<span className={markedHelpful ? 'is-helpful is-active' : 'is-helpful'} tabIndex={0} aria-label={`도움이 됐어요 ${helpfulCount}`}><ThumbsUp size={13} fill={markedHelpful ? 'currentColor' : 'none'} /><b>{helpfulCount}</b></span>} /><TooltipContent side="bottom">도움이 됐어요 {helpfulCount}</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger render={<span tabIndex={0} aria-label={`즐겨찾기 수 ${selectedAsset.favorite ? 94 : 93}`}><Bookmark size={13} /><b>{selectedAsset.favorite ? 94 : 93}</b></span>} /><TooltipContent side="bottom">즐겨찾기 {selectedAsset.favorite ? 94 : 93}</TooltipContent></Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
             </div>
-            <div className="code-detail-actions">
-              <button type="button" className={selectedAsset.favorite ? 'detail-icon-action is-active' : 'detail-icon-action'} onClick={() => toggleFavorite(selectedAsset.id)} aria-label="즐겨찾기·구독" title="즐겨찾기·구독"><Bookmark size={17} fill={selectedAsset.favorite ? 'currentColor' : 'none'} /></button>
-              <button type="button" className="detail-icon-action" onClick={copyAssetUrl} aria-label="자산 URL 복사" title="자산 URL 복사"><Link2 size={17} /></button>
-              <button type="button" className="detail-icon-action" onClick={() => setNotice('코드 자산 정보 수정 화면을 준비합니다.')} aria-label="자산 정보 수정" title="자산 정보 수정"><PencilLine size={17} /></button>
-              <button type="button" className="detail-icon-action is-danger" onClick={() => setNotice('코드 자산 사용 중지 요청 화면을 준비합니다.')} aria-label="코드 자산 사용 중지" title="코드 자산 사용 중지"><Power size={17} /></button>
-              {selectedAsset.restricted ? <button type="button" className="detail-primary-action" onClick={() => setAccessRequested(true)}><LockKeyhole size={15} /> {accessRequested ? '요청 접수됨' : '열람 권한 요청'}</button> : <button type="button" className="detail-primary-action" onClick={() => setNotice('코드 편집 세션을 준비합니다.')}><PencilLine size={15} /> 코드 편집</button>}
-            </div>
+            <aside className="reader-utility-panel" aria-label="자산 활용">
+              <div className="reader-management-top"><button type="button" className="reader-quiet-action" onClick={() => setNotice('자산 정보 수정 기능을 준비 중입니다.')}><Settings2 size={14} /> 수정</button><button type="button" className="reader-quiet-action is-danger" onClick={() => setNotice('코드 자산 비활성화 확인 창을 준비 중입니다.')}><CircleSlash2 size={14} /> 비활성화</button><button type="button" className="reader-quiet-action" onClick={copyAssetUrl}><Link2 size={14} /> URL 복사</button><button type="button" className={selectedAsset.favorite ? 'reader-quiet-action is-active' : 'reader-quiet-action'} onClick={() => toggleFavorite(selectedAsset.id)} aria-label={selectedAsset.favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} title={selectedAsset.favorite ? '즐겨찾기에서 제거합니다.' : '자주 찾는 자산으로 저장합니다.'}><Bookmark size={14} fill={selectedAsset.favorite ? 'currentColor' : 'none'} /> 즐겨찾기</button></div>
+              <div className="reader-utility-buttons"><TooltipProvider delay={250}><Tooltip><TooltipTrigger render={<button type="button" className="detail-secondary-action reader-start-action" onClick={() => setForkOpen(true)}><GitFork size={15} /> 이 코드로 시작</button>} /><TooltipContent className="reader-start-tooltip" side="bottom" align="start">해당 코드를 내 과제로 가져와 수정하고 실행합니다.</TooltipContent></Tooltip></TooltipProvider><button type="button" className="detail-secondary-action" onClick={downloadAsset}><Download size={15} /> 다운로드</button><button type="button" className="detail-secondary-action" onClick={() => setSdkOpen(true)}><TerminalSquare size={15} /> SDK 스니펫</button></div>
+            </aside>
           </header>
 
           {selectedAsset.restricted ? <section className="restricted-notebook"><LockKeyhole size={28} /><span>ACCESS RESTRICTED</span><h2>Notebook 본문 열람 권한이 필요합니다</h2><p>자산의 존재와 일반 메타정보는 확인할 수 있습니다. HMMA 생산물류혁신팀의 승인을 받으면 코드와 실행 이력을 열람할 수 있습니다.</p><button type="button" onClick={() => setAccessRequested(true)}>{accessRequested ? '권한 요청이 접수되었습니다' : '열람 권한 요청'}</button></section> :
           <Tabs value={detailTab} onValueChange={(value) => updateCodeDetailUrl(value)} className="code-detail-tabs">
-            <TabsList variant="line" className="code-detail-tablist">
-              <TabsTrigger value="notebook">Notebook</TabsTrigger>
-              <TabsTrigger value="packages">패키지</TabsTrigger>
-              <TabsTrigger value="versions">버전</TabsTrigger>
-              <TabsTrigger value="runs">실행 이력</TabsTrigger>
-              <TabsTrigger value="lineage">연결 관계</TabsTrigger>
-              <TabsTrigger value="access">접근 관리</TabsTrigger>
-            </TabsList>
-            <TabsContent value="notebook" className="code-detail-tabcontent">
-              <div className="notebook-layout">
-                <NotebookHtmlViewer version={selectedVersion} />
-                <aside className="detail-side-stack">
-                  <section className="asset-utility-card">
-                    <header className="asset-utility-heading"><strong>자산 활용</strong><span>코드를 내려받거나 다른 과제에서 재사용합니다.</span></header>
-                    <div className="asset-utility-actions">
-                      <button type="button" onClick={downloadAsset}><Download size={16} /><span>코드 다운로드</span><ArrowRight size={14} /></button>
-                      <button type="button" onClick={() => setSdkOpen(true)}><TerminalSquare size={16} /><span>SDK 스니펫 보기</span><ArrowRight size={14} /></button>
-                      <button type="button" onClick={() => setForkOpen(true)}><GitFork size={16} /><span>이 코드로 시작</span><ArrowRight size={14} /></button>
-                    </div>
-                    <div className="asset-rating-control"><div><strong>이 코드가 도움이 되었나요?</strong><span>{userRating ? `${userRating}점을 남겼습니다` : '평점을 남겨 재사용 판단을 도와주세요'}</span></div><span>{[1,2,3,4,5].map((score) => <button type="button" className={userRating >= score ? 'is-active' : ''} onClick={() => { setUserRating(score); setNotice(`${score}점 평가를 반영했습니다.`); }} aria-label={`${score}점 주기`} key={score}><Star size={18} fill={userRating >= score ? 'currentColor' : 'none'} /></button>)}</span></div>
-                    <button type="button" className="asset-discussion-action" onClick={() => setNotice('이 코드 자산의 디스커션 18개를 불러옵니다.')}><MessageSquareText size={16} /><span><strong>디스커션</strong><small>질문과 활용 경험을 나눕니다</small></span><b>18</b><ArrowRight size={13} /></button>
-                  </section>
-                  <div className="execution-rail">
-                    <section><span className="rail-label">입력 데이터</span><a href="/assets/data?asset=PRJ000212-D-0001"><Database size={15} /><div><strong>용접 비드 결함 데이터셋</strong><small>v13 · 43,180 images</small></div><ArrowUpRight size={13} /></a></section>
-                    <section><span className="rail-label">실행 자원</span><a href="/resources/compute"><Cpu size={15} /><div><strong>ml.a100.20gb</strong><small>CPU 16 · MEM 64GB · NVIDIA A100 20GB</small></div><ArrowUpRight size={13} /></a></section>
-                    <section><span className="rail-label">실행 환경</span><a href="/resources/environments"><Layers3 size={15} /><div><strong>pytorch-2.4-yolo12-py311-cu124</strong><small>Ubuntu 22.04 · Python 3.11 · CUDA 12.4</small></div><ArrowUpRight size={13} /></a></section>
-                    <section><span className="rail-label">출력 자산</span><a href="/assets/models"><Box size={15} /><div><strong>WeldNet 2.4.1</strong><small>Model candidate</small></div><ArrowUpRight size={13} /></a></section>
-                    <button type="button" className="rail-run-button" onClick={() => setExecutionOpen(true)}><Play size={14} fill="currentColor" /> 이 버전으로 실행</button>
-                  </div>
-                </aside>
+            <div className={detailScrolled ? 'code-detail-tabs-bar is-scrolled' : 'code-detail-tabs-bar'}>
+              {detailScrolled && <div className="code-detail-compact-row"><div><small>{selectedAsset.project} · {selectedAsset.id}</small><strong>{selectedAsset.title}</strong></div><nav aria-label="스크롤 고정 자산 동작"><button type="button" onClick={downloadAsset}><Download size={14} /> 다운로드</button><button type="button" onClick={() => setSdkOpen(true)}><TerminalSquare size={14} /> SDK 스니펫</button>{!selectedAsset.restricted && <button type="button" onClick={openEditSession}><PencilLine size={14} /> {editSessionLoading ? '준비 중' : 'PRIZM Lab 편집'}</button>}<button type="button" onClick={() => setExecutionOpen(true)}><Play size={14} fill="currentColor" /> 실행</button></nav></div>}
+              <div className="code-detail-tabs-navigation">
+                <TabsList variant="line" className="code-detail-tablist">
+                  <TabsTrigger value="notebook">Notebook</TabsTrigger>
+                  <TabsTrigger value="packages">실행 환경</TabsTrigger>
+                  <TabsTrigger value="versions">버전 변경 이력</TabsTrigger>
+                  <TabsTrigger value="runs">실행 이력</TabsTrigger>
+                  <TabsTrigger value="lineage">연결 관계</TabsTrigger>
+                  <TabsTrigger value="discussion">디스커션 <b>18</b></TabsTrigger>
+                </TabsList>
+                <nav className="code-notebook-tools" aria-label="Notebook 도구">
+                  <a href="/notebooks/weld-training-v2.4.1-reader.html" target="_blank" rel="noreferrer" aria-label="새 탭으로 Notebook 열기" title="새 탭으로 Notebook 열기"><ExternalLink size={16} /></a>
+                  <button type="button" onClick={() => setNotebookPanelOpen((open) => !open)} aria-label={notebookPanelOpen ? '우측 정보 접기' : '우측 정보 펼치기'} title={notebookPanelOpen ? '우측 정보 접기' : '우측 정보 펼치기'}>{notebookPanelOpen ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}</button>
+                </nav>
               </div>
+            </div>
+            <TabsContent value="notebook" className="code-detail-tabcontent">
+              <CodeDetailSplit panelOpen={notebookPanelOpen} className="notebook-layout" panel={
+                <CodeDetailRail className="code-notebook-context" label="Notebook 실행 정보 및 목차">
+                  <section className="notebook-run-summary"><header className="reader-runtime-heading"><button type="button" className="reader-run-heading" onClick={() => { setActiveRunId('RUN-26841'); navigateWorkspace('run', 'RUN-26841'); }}><h3>실행 정보</h3><ArrowRight size={15} /></button></header><dl><div><dt>상태</dt><dd className="is-ready">실행 완료</dd></div><div><dt>실행 시간</dt><dd>1h 42m</dd></div><div><dt>언어</dt><dd>Python 3.11</dd></div><div><dt>최근 실행</dt><dd>2026.09.12</dd></div><div><dt>의존성</dt><dd>9 직접 · 187 전체</dd></div></dl>{!selectedAsset.restricted && <div className="reader-runtime-actions"><button type="button" onClick={openEditSession}><PencilLine size={14} /> {editSessionLoading ? '준비 중' : 'PRIZM Lab 편집'}</button><button type="button" className="is-primary" onClick={() => setExecutionOpen(true)}><Play size={13} fill="currentColor" /> 실행</button></div>}</section>
+                  <section className="notebook-context-assets">
+                    <h3>연결 자산</h3>
+                    <a href="/assets/data?asset=PRJ000212-D-0001"><span><small>입력 데이터</small><strong>용접 비드 결함 데이터셋 · v13</strong></span><ArrowUpRight size={12} /></a>
+                    <a href="/resources/environments"><span><small>실행 환경</small><strong>pytorch-2.4-yolo12-py311-cu124</strong></span><ArrowUpRight size={12} /></a>
+                    <a href="/resources/compute"><span><small>실행 자원</small><strong>ml.a100.20gb</strong></span><ArrowUpRight size={12} /></a>
+                    <a href="/assets/models"><span><small>출력 모델</small><strong>WeldNet 2.4.1 · Candidate</strong></span><ArrowUpRight size={12} /></a>
+                  </section>
+                  <nav className="notebook-context-toc" aria-label="Notebook 목차"><span>목차</span><button type="button" className={activeNotebookSection === 'overview' ? 'is-active' : ''} onClick={() => scrollToNotebookSection('overview')}>개요</button><button type="button" className={activeNotebookSection === 'data' ? 'is-active' : ''} onClick={() => scrollToNotebookSection('data')}>1. 파라미터와 자산 연결</button><button type="button" className={activeNotebookSection === 'training' ? 'is-active' : ''} onClick={() => scrollToNotebookSection('training')}>2. 파라미터 기반 모델 학습</button><button type="button" className={activeNotebookSection === 'test-output' ? 'is-active' : ''} onClick={() => scrollToNotebookSection('test-output')}>3. 테스트 이미지 추론 결과</button><button type="button" className={activeNotebookSection === 'evaluation' ? 'is-active' : ''} onClick={() => scrollToNotebookSection('evaluation')}>4. 평가 및 모델 등록</button></nav>
+                </CodeDetailRail>
+              }>
+                <NotebookHtmlViewer />
+              </CodeDetailSplit>
             </TabsContent>
-            <TabsContent value="packages" className="code-detail-tabcontent"><PackageView /></TabsContent>
-            <TabsContent value="versions" className="code-detail-tabcontent"><VersionHistory /></TabsContent>
+            <TabsContent value="packages" className="code-detail-tabcontent"><PackageView panelOpen={notebookPanelOpen} /></TabsContent>
+            <TabsContent value="versions" className="code-detail-tabcontent"><VersionHistory currentVersion={selectedVersion} panelOpen={notebookPanelOpen} /></TabsContent>
             <TabsContent value="runs" className="code-detail-tabcontent"><RunHistory onOpenRun={() => setScreen('run')} /></TabsContent>
             <TabsContent value="lineage" className="code-detail-tabcontent"><LineageView /></TabsContent>
+            <TabsContent value="discussion" className="code-detail-tabcontent"><DiscussionView helpfulCount={helpfulCount} markedHelpful={markedHelpful} onToggleHelpful={toggleHelpful} /></TabsContent>
             <TabsContent value="access" className="code-detail-tabcontent"><AccessView requested={accessRequested} onRequest={() => setAccessRequested(true)} /></TabsContent>
           </Tabs>}
+          {editSession && createPortal(
+            <section className="edit-session-overlay" aria-label="코드 편집 세션">
+              <header className="edit-session-overlay-bar">
+                <strong>{selectedAsset.title}</strong>
+                <div>
+                  <button type="button" onClick={() => window.open(editSessionUrl(editSession), '_blank', 'noopener,noreferrer')}>
+                    새 탭에서 열기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await registerEditSessionVersion(editSession.sessionId);
+                        setNotice('새 버전으로 등록했습니다.');
+                      } catch (error) {
+                        setNotice(error instanceof Error ? error.message : '새 버전 등록에 실패했습니다.');
+                      }
+                    }}
+                  >
+                    새 버전으로 등록
+                  </button>
+                  <button type="button" onClick={() => setEditSession(null)}>닫기</button>
+                </div>
+              </header>
+            </section>,
+            document.body,
+          )}
         </PortalDetailFrame>}
 
         {!visionDemoOpen && screen === 'pipeline' && <PipelineWorkspace runs={runRecords} schedules={schedules} view={pipelineView} project={pipelineProject} onProjectChange={(project) => { setPipelineProject(project); const asset = assets.find((item) => item.project === project && item.executable); if (asset) setPipelineCodeAssetId(asset.id); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); params.set('project', project === '용접 품질 고도화' ? 'PRJ000212' : project); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onExecute={openPipelineCodePicker} onViewChange={(value) => { setPipelineView(value); const params = new URLSearchParams(window.location.search); params.set('pipeline', '1'); value === 'schedules' ? params.set('view', 'schedules') : params.delete('view'); window.history.replaceState(null, '', `/assets/code?${params.toString()}`); }} onOpenRun={(id) => { setActiveRunId(id); navigateWorkspace('run', id); }} />}
@@ -1175,7 +1463,7 @@ export function CodeAssetsWorkspace({ demoStage }: { demoStage?: DemoStage }) {
           <DialogHeader className="fork-dialog-header">
             <span>START FROM VERIFIED CODE</span>
             <DialogTitle>이 코드로 시작</DialogTitle>
-            <DialogDescription>검증된 코드와 실행 조건을 새 과제로 가져옵니다.</DialogDescription>
+            <DialogDescription>해당 코드를 내 과제로 가져와 수정하고 실행합니다.</DialogDescription>
           </DialogHeader>
           <div className="fork-dialog-body">
             <section className="fork-source-card">

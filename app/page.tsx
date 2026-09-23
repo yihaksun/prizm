@@ -49,7 +49,7 @@ const platformGroups: NavGroup[] = [
   { label: '대시보드', icon: LayoutDashboard, active: true, children: [{ label: '홈', href: '/' }, { label: '오늘의 작업', href: '#attention' }, { label: '거점 운영', href: '#sites' }, { label: '파이프라인 현황', href: '#execute' }, { label: '성과 근거', href: '#evidence' }, { label: '재무 기여', href: '#contribution' }] },
   { label: '과제관리', icon: Layers3, href: '/projects' },
   { label: '데이터관리', icon: Database, children: [{ label: '이미지 카탈로그', href: '/image-catalog/review' }, { label: '데이터 연결 매뉴얼', href: '#assets' }] },
-  { label: '자산관리', icon: LibraryBig, children: [{ label: '모델 자산', href: '/assets/models' }, { label: '코드 자산', href: '/assets/code' }, { label: '데이터 자산', href: '/assets/data' }, { label: '파이프라인 개발 매뉴얼', href: '#flow' }, { label: 'SDK 매뉴얼', href: '#flow' }] },
+  { label: '자산관리', icon: LibraryBig, children: [{ label: '모델 자산', href: '/assets/models' }, { label: '코드 자산', href: '/assets/code' }, { label: '데이터 자산', href: '/assets/data' }, { label: '파이프라인 구성', href: '/assets/pipelines' }, { label: '파이프라인 개발 매뉴얼', href: '#flow' }, { label: 'SDK 매뉴얼', href: '#flow' }] },
   { label: '실행관리', icon: Workflow, children: [{ label: '실험 대시보드', href: '/assets/code?pipeline=1' }] },
   { label: '평가관리', icon: ShieldCheck, children: [{ label: '모델 평가', href: '/evaluation/models' }, { label: '자동 평가 기준 관리', href: '#evidence' }] },
   { label: '배포관리', icon: Rocket, children: [{ label: '배포 현황', href: '#sites' }, { label: '배포 요청', href: '#attention' }, { label: '단계 승격', href: '#attention' }, { label: '거점 확산', href: '#sites' }, { label: '버전·롤백', href: '#history' }] },

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 
-export type PortalTabId = 'my-tasks' | 'projects' | 'data-assets' | 'code-assets' | 'model-assets' | 'pipeline-runs' | 'model-evaluation' | 'model-monitoring' | 'execution-resources' | 'execution-environments';
+export type PortalTabId = 'my-tasks' | 'projects' | 'data-assets' | 'code-assets' | 'model-assets' | 'pipeline-assets' | 'pipeline-runs' | 'model-evaluation' | 'model-monitoring' | 'execution-resources' | 'execution-environments';
 
 type PortalTab = { id: PortalTabId; label: string; href: string; scrollY?: number };
 
@@ -14,6 +14,7 @@ const tabDefinitions: Record<PortalTabId, { label: string; href: string }> = {
   'data-assets': { label: '데이터 자산', href: '/assets/data' },
   'code-assets': { label: '코드 자산', href: '/assets/code' },
   'model-assets': { label: '모델 자산', href: '/assets/models' },
+  'pipeline-assets': { label: '파이프라인 구성', href: '/assets/pipelines' },
   'pipeline-runs': { label: '실험 대시보드', href: '/assets/code?pipeline=1' },
   'model-evaluation': { label: '모델 평가', href: '/evaluation/models' },
   'model-monitoring': { label: '모델 성능', href: '/monitoring/models' },
